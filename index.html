@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'self' https://api.github.com https://gist.githubusercontent.com; base-uri 'none'; form-action 'none'">
-<title>안내 문자 문구 관리</title>
+<title>이룸 안내문자 현황판</title>
 <style>
   :root {
     --bg: #f5f6f8; --panel: #ffffff; --line: #e2e5ea; --text: #1a1d21; --muted: #6b7280;
@@ -21,11 +21,17 @@
   }
   header {
     position: sticky; top: 0; z-index: 10; background: var(--panel); border-bottom: 1px solid var(--line);
-    padding: 10px 18px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 8px 18px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   }
-  header h1 { font-size: 16px; margin: 0; font-weight: 700; }
-  header .rev { color: var(--muted); font-size: 13px; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 700; white-space: nowrap; }
   header .spacer { flex: 1; }
+  nav.tabs { display: flex; gap: 4px; }
+  nav.tabs button {
+    border: none; background: transparent; padding: 7px 12px; border-radius: 8px; font-weight: 600; color: var(--muted); position: relative;
+  }
+  nav.tabs button.on { background: #fff5ef; color: var(--brand); }
+  nav.tabs button .dot { display: none; position: absolute; top: 6px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
+  nav.tabs button.dirty .dot { display: block; }
   button {
     font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--text);
     border-radius: 8px; padding: 7px 13px; cursor: pointer;
@@ -36,8 +42,14 @@
   button.primary:disabled { background: #d9dde3; border-color: #d9dde3; color: #8b9199; cursor: not-allowed; }
   button.small { padding: 3px 9px; font-size: 13px; border-radius: 6px; }
   button.danger { color: var(--bad); }
-  main { display: grid; grid-template-columns: 300px minmax(0, 1fr) 340px; gap: 14px; padding: 14px 18px 40px; align-items: start; }
+  label.filebtn { display: inline-block; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 3px 9px; font-size: 13px; cursor: pointer; }
+  label.filebtn:hover { background: #f0f2f5; }
+  .bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 18px 0; }
+  .bar .rev { color: var(--muted); font-size: 13px; }
+  section.tab { padding-bottom: 40px; }
+  main { display: grid; grid-template-columns: 300px minmax(0, 1fr) 340px; gap: 14px; padding: 14px 18px 0; align-items: start; }
   @media (max-width: 1180px) { main { grid-template-columns: 1fr; } }
+  .wrap { padding: 14px 18px 0; display: grid; gap: 14px; }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
   .panel > h2 { font-size: 13px; margin: 0 0 10px; color: var(--muted); font-weight: 700; letter-spacing: .02em; }
   ul.list { list-style: none; margin: 0; padding: 0; }
@@ -49,11 +61,11 @@
   ul.list li .t { flex: 1; min-width: 0; }
   ul.list li .t b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   ul.list li .t span { color: var(--muted); font-size: 12px; }
-  ul.list li .mv { display: flex; flex-direction: column; gap: 2px; }
-  ul.list li .mv button { padding: 0 5px; font-size: 11px; line-height: 15px; border-radius: 4px; }
+  .mv { display: flex; flex-direction: column; gap: 2px; }
+  .mv button { padding: 0 5px; font-size: 11px; line-height: 15px; border-radius: 4px; }
   label.f { display: block; margin-bottom: 12px; }
   label.f > span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
-  input[type=text], textarea {
+  input[type=text], input[type=password], textarea {
     font: inherit; width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #fff; color: var(--text);
   }
   textarea { min-height: 320px; resize: vertical; line-height: 1.7; }
@@ -72,9 +84,7 @@
   .issues li { font-size: 13px; padding: 5px 9px; border-radius: 7px; margin-bottom: 5px; }
   .issues li.e { background: #fdeaea; color: #8f1d1d; }
   .issues li.w { background: #fdf3e2; color: #7c4a06; }
-  .phone {
-    background: #dfe4ea; border-radius: 16px; padding: 12px; margin-top: 4px;
-  }
+  .phone { background: #dfe4ea; border-radius: 16px; padding: 12px; margin-top: 4px; }
   .bubble {
     background: #fff; border-radius: 4px 14px 14px 14px; padding: 11px 13px; white-space: pre-wrap; word-break: break-all;
     font-size: 13.5px; line-height: 1.65; box-shadow: 0 1px 2px rgba(0,0,0,.08);
@@ -83,15 +93,46 @@
   .fold { border-top: 1px dashed #c3c9d2; margin: 7px 0 5px; font-size: 11px; color: #8e959f; text-align: center; }
   .note { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
   .status { font-size: 13px; padding: 6px 11px; border-radius: 8px; }
-  .status.ok { background: #e6f5ef; } .status.bad { background: #fdeaea; } .status.busy { background: #eef1f5; color: var(--muted); }
+  .status.ok { background: #e6f5ef; } .status.bad { background: #fdeaea; } .status.busy { background: #eef1f5; color: var(--muted); } .status.warn { background: #fdf3e2; }
   .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   dialog { border: 1px solid var(--line); border-radius: 14px; padding: 18px; max-width: 560px; width: calc(100% - 36px); }
   dialog::backdrop { background: rgba(20,22,26,.42); }
   dialog h3 { margin: 0 0 10px; font-size: 15px; }
-  pre.json { background: #f5f6f8; border-radius: 8px; padding: 10px; font-size: 12px; max-height: 320px; overflow: auto; }
+  pre.json { background: #f5f6f8; border-radius: 8px; padding: 10px; font-size: 12px; max-height: 320px; overflow: auto; white-space: pre-wrap; }
   .empty { color: var(--muted); font-size: 13px; padding: 12px 2px; }
   .staffbox { max-height: 190px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
   .hint { font-size: 12px; color: var(--muted); }
+  code { background: #eef1f5; border-radius: 4px; padding: 1px 5px; font-size: 12.5px; word-break: break-all; }
+
+  /* 현황 */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+  .card h3 { margin: 0; font-size: 13px; color: var(--muted); font-weight: 700; }
+  .card .big { font-size: 22px; font-weight: 700; line-height: 1.2; }
+  .card .sub { font-size: 12.5px; color: var(--muted); }
+  .card .row { margin-top: auto; padding-top: 6px; }
+  .card img { width: 100%; border-radius: 8px; border: 1px solid var(--line); background: #fff; }
+  .glance { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .glance .g { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: #fafbfc; }
+  .glance .g h4 { margin: 0 0 2px; font-size: 13.5px; }
+  .glance .g .meta { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .glance .g pre { margin: 0; white-space: pre-wrap; word-break: break-all; font: 12.5px/1.6 inherit; font-family: inherit; }
+  .how li { margin-bottom: 4px; }
+
+  /* 직원·명함 */
+  ul.roster { list-style: none; margin: 0; padding: 0; }
+  ul.roster li { display: flex; gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+  ul.roster .thumb { width: 168px; height: 95px; border-radius: 6px; border: 1px solid var(--line); background: #f0f2f5; display: flex; align-items: center; justify-content: center; overflow: hidden; color: var(--muted); font-size: 12px; flex: none; }
+  ul.roster .thumb img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+  ul.roster .fields { display: flex; gap: 8px; flex: 1; min-width: 220px; align-items: center; }
+  ul.roster .fields .n { font-size: 12px; color: var(--muted); width: 26px; text-align: right; }
+  ul.roster .fields input { width: auto; flex: 1; min-width: 90px; }
+  ul.roster .ractions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  ul.roster .meta { font-size: 12px; color: var(--muted); width: 100%; padding-left: 180px; }
+  ul.roster li.new { border-color: var(--brand); }
+  .shared-view img { max-width: 420px; width: 100%; border-radius: 8px; border: 1px solid var(--line); background: #fff; }
+  .badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: #fdf3e2; color: #7c4a06; margin-left: 6px; }
+
   #gate { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 50; }
   .gate-card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px; max-width: 460px; width: 100%; }
   .gate-card h2 { margin: 0 0 6px; font-size: 17px; }
@@ -102,54 +143,125 @@
 </head>
 <body>
 <header>
-  <h1>안내 문자 문구 관리</h1>
-  <span class="rev" id="revline">불러오는 중…</span>
+  <h1>이룸 안내문자 현황판</h1>
+  <nav class="tabs" id="tabs">
+    <button data-tab="overview" class="on">현황</button>
+    <button data-tab="templates">문구<i class="dot"></i></button>
+    <button data-tab="staff">직원·명함<i class="dot"></i></button>
+    <button data-tab="shared">회사 사진<i class="dot"></i></button>
+  </nav>
   <span class="spacer"></span>
   <span class="status busy" id="status">시작</span>
   <button id="btn-token" hidden>열쇠 바꾸기</button>
   <button id="btn-reload">다시 불러오기</button>
-  <button id="btn-download">파일로 내려받기</button>
-  <button class="primary" id="btn-publish">직원 폰에 배포하기</button>
 </header>
 
-<main>
-  <section class="panel">
-    <h2>문구 목록 <span class="hint">(위에 있는 것이 팝업에서 먼저 보입니다)</span></h2>
-    <ul class="list" id="list"></ul>
-    <div class="row">
-      <button class="small" id="btn-add">+ 새 문구</button>
-      <button class="small" id="btn-dup">복제</button>
-      <button class="small danger" id="btn-del">삭제</button>
+<!-- ───────── 현황 ───────── -->
+<section class="tab" id="tab-overview">
+  <div class="wrap">
+    <div class="cards" id="ov-cards"></div>
+    <div class="panel">
+      <h2>문구 한눈에 <span class="hint">(지금 직원 폰에 들어가 있는 문구. 고치려면 「문구」 탭)</span></h2>
+      <div class="glance" id="ov-glance"></div>
     </div>
-  </section>
+    <div class="panel">
+      <h2>여기서 고치면 폰에는 이렇게 갑니다</h2>
+      <ul class="how">
+        <li><b>문구</b> — 「문구」 탭에서 배포하면 직원 폰이 앱을 열거나 통화 팝업이 닫힐 때 받아 갑니다. 늦어도 <b>1시간</b>.</li>
+        <li><b>직원·명함·회사 사진</b> — 「직원·명함」·「회사 사진」 탭에서 저장하면 같은 방법으로 <b>1시간</b> 안에 갑니다. <b>앱 v0.26 이상</b>인 폰만 사진이 바뀝니다(그 아래 버전은 설치 파일 안의 사진을 계속 씁니다).</li>
+        <li><b>앱 자체</b> — 새 버전을 올리면 폰이 <b>6시간</b>마다 확인해 설치를 권합니다(v0.20 이상). 그보다 낮은 폰은 아래 설치 링크로 한 번 다시 깔아야 그 뒤로 자동입니다.</li>
+        <li>폰은 아무것도 되돌려 보내지 않습니다(어느 폰이 어디까지 받았는지는 여기서 알 수 없습니다). 확인은 그 폰의 설정 화면에서.</li>
+        <li>새 직원: 여기서 이름·직함·명함을 넣고 → 폰에 앱을 깔고 → 폰 마이페이지에서 <b>자기 이름을 한 번 고르면</b> 그 명함이 붙습니다. 전화번호는 이 화면에 넣지 않습니다.</li>
+      </ul>
+    </div>
+  </div>
+</section>
 
-  <section class="panel" id="editor">
-    <h2>문구 편집</h2>
-    <div id="editor-body"></div>
-  </section>
+<!-- ───────── 문구 ───────── -->
+<section class="tab" id="tab-templates" hidden>
+  <div class="bar">
+    <span class="rev" id="revline">불러오는 중…</span>
+    <span class="spacer"></span>
+    <button id="btn-download">파일로 내려받기</button>
+    <button class="primary" id="btn-publish">직원 폰에 배포하기</button>
+  </div>
+  <main>
+    <section class="panel">
+      <h2>문구 목록 <span class="hint">(위에 있는 것이 팝업에서 먼저 보입니다)</span></h2>
+      <ul class="list" id="list"></ul>
+      <div class="row">
+        <button class="small" id="btn-add">+ 새 문구</button>
+        <button class="small" id="btn-dup">복제</button>
+        <button class="small danger" id="btn-del">삭제</button>
+      </div>
+    </section>
 
-  <section class="panel">
-    <h2>고객 폰에서 이렇게 보입니다</h2>
-    <div class="row" style="margin-bottom:8px">
-      <select id="prev-staff" style="font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line)"></select>
-      <select id="prev-time" style="font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line)">
-        <option value="10">낮에 보낼 때</option>
-        <option value="21">밤 8시 이후</option>
-      </select>
+    <section class="panel" id="editor">
+      <h2>문구 편집</h2>
+      <div id="editor-body"></div>
+    </section>
+
+    <section class="panel">
+      <h2>고객 폰에서 이렇게 보입니다</h2>
+      <div class="row" style="margin-bottom:8px">
+        <select id="prev-staff" style="font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line)"></select>
+        <select id="prev-time" style="font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line)">
+          <option value="10">낮에 보낼 때</option>
+          <option value="21">밤 8시 이후</option>
+        </select>
+      </div>
+      <div class="phone">
+        <div class="bubble" id="preview"></div>
+      </div>
+      <div class="counts" id="counts"></div>
+      <ul class="issues" id="issues"></ul>
+      <p class="note">사진 2장(회사 소개·담당자 명함)이 이 글과 함께 한 통으로 나갑니다. 명함에 있는 대표번호·주소·홈페이지는 글에 다시 쓰지 않습니다.</p>
+      <p class="note"><b>어떤 전화에 쓸지</b>를 고른 문구는 그 통화 뒤 팝업에 <b>먼저 뜹니다</b>. 고르지 않은 문구도 팝업 목록에 모두 나오며 직원이 상황에 맞게 고릅니다.</p>
+    </section>
+  </main>
+</section>
+
+<!-- ───────── 직원·명함 ───────── -->
+<section class="tab" id="tab-staff" hidden>
+  <div class="bar">
+    <span class="rev" id="rosterline"></span>
+    <span class="spacer"></span>
+    <button id="btn-staff-add">+ 직원 추가</button>
+    <button class="primary" id="btn-roster-save">직원 폰에 반영하기</button>
+  </div>
+  <div class="wrap">
+    <div class="panel">
+      <ul class="roster" id="roster"></ul>
+      <ul class="issues" id="roster-issues"></ul>
+      <p class="note">명함 사진은 이 브라우저 안에서 긴 변 1280px 로 줄여 올립니다(원본은 올라가지 않습니다). 문자 한 통에 사진 2장이 들어가므로 400KB 를 넘으면 경고합니다.</p>
+      <p class="note">직원을 지우면 그 명함도 함께 사라집니다. 이름을 바꾸면 「문구」 탭에서 그 사람 전용으로 지정한 문구가 풀리니 다시 지정하세요.</p>
     </div>
-    <div class="phone">
-      <div class="bubble" id="preview"></div>
+  </div>
+</section>
+
+<!-- ───────── 회사 사진 ───────── -->
+<section class="tab" id="tab-shared" hidden>
+  <div class="bar">
+    <span class="rev" id="sharedline"></span>
+    <span class="spacer"></span>
+    <button class="primary" id="btn-roster-save-2">직원 폰에 반영하기</button>
+  </div>
+  <div class="wrap">
+    <div class="panel">
+      <h2>모든 직원의 안내 문자에 함께 나가는 회사 사진</h2>
+      <div class="shared-view" id="shared-view"></div>
+      <div class="row" style="margin-top:10px">
+        <label class="filebtn">사진 바꾸기<input type="file" accept="image/*" id="shared-file" hidden></label>
+        <button class="small danger" id="btn-shared-del">사진 없이 보내기</button>
+      </div>
+      <p class="note">명함이 먼저, 이 사진이 두 번째로 붙습니다. 언론보도·수상 실적처럼 <b>회사가 어떤 곳인지</b> 한 장으로 보여 주는 사진을 두세요. 글에 다시 쓸 필요가 없는 정보(대표번호·주소)는 사진에 두는 것이 낫습니다.</p>
     </div>
-    <div class="counts" id="counts"></div>
-    <ul class="issues" id="issues"></ul>
-    <p class="note">사진 2장(회사 소개·담당자 명함)이 이 글과 함께 한 통으로 나갑니다. 명함에 있는 대표번호·주소·홈페이지는 글에 다시 쓰지 않습니다.</p>
-    <p class="note"><b>어떤 전화에 쓸지</b>를 고른 문구는 그 통화 뒤 팝업에 <b>먼저 뜹니다</b>. 고르지 않은 문구도 팝업 목록에 모두 나오며 직원이 상황에 맞게 고릅니다.</p>
-  </section>
-</main>
+  </div>
+</section>
 
 <div id="gate" hidden>
   <div class="gate-card">
-    <h2>안내 문자 문구 관리</h2>
+    <h2>이룸 안내문자 현황판</h2>
     <p class="gate-lead">이 화면을 쓰려면 <b>GitHub 열쇠(토큰)</b>가 필요합니다. 회사 배포처를 고칠 수 있는 열쇠입니다.</p>
     <label class="f"><span>열쇠 (ghp_ 로 시작합니다)</span>
       <input type="password" id="gate-token" autocomplete="off" spellcheck="false" placeholder="ghp_…"></label>
@@ -191,10 +303,21 @@ const MONEY = /\d[\d,.]*\s*(억|천만|백만|만|천)?\s*원/;
 const KEY_RE = /^[a-z0-9][a-z0-9_-]*$/;
 const WORST = { name: "남궁민수", title: "수석컨설턴트" };  // 이름+직함 10자, 앱의 경고 상한
 
-let state = { name: "", revision: 0, templates: [], staff: [], sel: 0, dirty: false, source: "", canPublish: true };
+// ---- 사진·명부 규칙 (docs/ADR-010, domain/images/) ----
+const PHOTO = { maxSide: 1280, quality: 0.85, warnBytes: 400 * 1024, maxBytes: 1024 * 1024, maxStaff: 50, maxName: 20, maxTitle: 20 };
+const FILE_RE = /^(card|shared)-[0-9a-f]{12}\.b64$/;
+const PHONE_RE = /01[016789][-. ]?\d{3,4}[-. ]?\d{4}/;
+
+let state = {
+  name: "", revision: 0, templates: [], staff: [], sel: 0, dirty: false, source: "", canPublish: true,
+  // 명부·사진(staff.json 형식 2). files 는 배포처에 있는 사진(base64), staged 는 아직 안 올린 새 사진.
+  roster: { format: 2, revision: 0, staff: [], shared: [] }, rosterFormat: 0, files: {}, staged: {}, rosterDirty: false, rosterSupported: true,
+  version: null, release: null,
+};
 
 const $ = (id) => document.getElementById(id);
-const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const kb = (n) => `${Math.round((n || 0) / 1024)}KB`;
 
 function render(body, staff, hour) {
   const deadline = hour >= 20 ? "내일 오전까지" : "오늘 안에";
@@ -290,7 +413,25 @@ function allIssues() {
   return state.templates.flatMap((t, i) => checkTemplate(t, i).map((x) => ({ ...x, key: t.key, name: t.name })));
 }
 
-// ---- 그리기 ----
+// ---- 탭 ----
+const TABS = ["overview", "templates", "staff", "shared"];
+function showTab(id) {
+  if (!TABS.includes(id)) id = "overview";
+  for (const t of TABS) $("tab-" + t).hidden = t !== id;
+  for (const b of $("tabs").querySelectorAll("button")) b.classList.toggle("on", b.dataset.tab === id);
+  if (location.hash !== "#" + id) history.replaceState(null, "", "#" + id);
+}
+for (const b of $("tabs").querySelectorAll("button")) b.onclick = () => showTab(b.dataset.tab);
+window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
+
+function drawTabs() {
+  for (const b of $("tabs").querySelectorAll("button")) {
+    const dirty = b.dataset.tab === "templates" ? state.dirty : (b.dataset.tab === "staff" || b.dataset.tab === "shared") ? state.rosterDirty : false;
+    b.classList.toggle("dirty", dirty);
+  }
+}
+
+// ---- 문구 그리기 ----
 function drawList() {
   const ul = $("list");
   ul.innerHTML = "";
@@ -305,7 +446,7 @@ function drawList() {
     li.addEventListener("click", (e) => {
       if (e.target.dataset.up !== undefined) { move(i, -1); e.stopPropagation(); return; }
       if (e.target.dataset.down !== undefined) { move(i, 1); e.stopPropagation(); return; }
-      state.sel = i; drawAll();
+      state.sel = i; drawTemplates();
     });
     ul.appendChild(li);
   });
@@ -344,7 +485,7 @@ function drawEditor() {
 
   const staffBox = $("f-staff");
   if (!state.staff.length) {
-    staffBox.innerHTML = '<span class="hint">직원 명부를 불러오지 못했습니다.</span>';
+    staffBox.innerHTML = '<span class="hint">직원 명부가 비어 있습니다. 「직원·명함」 탭에서 넣으세요.</span>';
   } else {
     const allOn = !(t.staff || []).length;
     const every = document.createElement("span");
@@ -413,7 +554,7 @@ function drawPreview() {
   $("issues").innerHTML = issues.map((x) => `<li class="${x.level}">${esc(x.text)}</li>`).join("");
 }
 
-function drawHeader() {
+function drawTemplatesBar() {
   $("revline").textContent = `${state.name || "이름 없는 묶음"} · 개정 ${state.revision}${state.dirty ? " · 고친 내용 있음" : ""}` +
     (state.source ? ` · ${state.source}` : "");
   const errors = allIssues().filter((x) => x.level === "e").length;
@@ -422,9 +563,10 @@ function drawHeader() {
   $("btn-publish").title = !state.canPublish ? "서버에 배포용 GitHub 토큰(CBM_GITHUB_TOKEN)이 없습니다. 파일로 내려받아 내 맥에서 배포하세요." : "";
 }
 
-function drawAll() { drawList(); drawEditor(); drawPreview(); drawHeader(); }
-function touch() { state.dirty = true; drawAll(); }
-function touchLight() { state.dirty = true; drawList(); drawPreview(); drawHeader(); }
+function drawTemplates() { drawList(); drawEditor(); drawPreview(); drawTemplatesBar(); drawTabs(); }
+function drawAll() { drawTemplates(); drawRoster(); drawShared(); drawOverview(); }
+function touch() { state.dirty = true; drawTemplates(); drawOverview(); }
+function touchLight() { state.dirty = true; drawList(); drawPreview(); drawTemplatesBar(); drawTabs(); }
 
 function move(i, d) {
   const j = i + d;
@@ -437,6 +579,296 @@ function move(i, d) {
 
 function setStatus(text, kind) { const el = $("status"); el.textContent = text; el.className = "status " + (kind || "busy"); }
 
+// ---- 현황 ----
+function drawOverview() {
+  const r = state.roster;
+  const withCard = r.staff.filter((s) => s.card).length;
+  const v = state.version;
+  const rel = state.release;
+  const when = (iso) => { if (!iso) return ""; const d = new Date(iso); return isNaN(d) ? "" : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  const sharedEntry = r.shared[0];
+  const sharedImg = sharedEntry ? dataUrl(sharedEntry) : "";
+  $("ov-cards").innerHTML = `
+    <div class="card">
+      <h3>앱</h3>
+      <div class="big">${v ? "v" + esc(v.versionName) : "확인 중…"}</div>
+      <div class="sub">${v ? `설치 파일 ${kb(v.sizeBytes)}${rel && rel.published_at ? " · " + when(rel.published_at) + " 배포" : ""}` : ""}</div>
+      <div class="sub">${v && v.notes ? esc(v.notes) : ""}</div>
+      <div class="row"><button class="small" id="btn-copy-link">설치 링크 복사</button><span class="hint">직원에게 보내면 항상 최신 버전이 깔립니다</span></div>
+    </div>
+    <div class="card">
+      <h3>문구</h3>
+      <div class="big">개정 ${state.revision}${state.dirty ? '<span class="badge">고치는 중</span>' : ""}</div>
+      <div class="sub">문구 ${state.templates.length}개 · 자동으로 먼저 뜨는 문구 ${state.templates.filter((t) => (t.rules || []).length).length}개 · 직원 전용 ${state.templates.filter((t) => (t.staff || []).length).length}개</div>
+      <div class="row"><button class="small" data-go="templates">문구 고치기</button></div>
+    </div>
+    <div class="card">
+      <h3>직원·명함</h3>
+      <div class="big">${r.staff.length}명${state.rosterDirty ? '<span class="badge">고치는 중</span>' : ""}</div>
+      <div class="sub">명함 있는 직원 ${withCard}명${r.staff.length - withCard ? ` · 명함 없는 직원 ${r.staff.length - withCard}명` : ""} · 명부 개정 ${r.revision}</div>
+      <div class="sub">${r.staff.map((s) => esc(s.name)).join(", ") || "아직 없습니다"}</div>
+      <div class="row"><button class="small" data-go="staff">직원·명함 고치기</button></div>
+    </div>
+    <div class="card">
+      <h3>회사 사진</h3>
+      ${sharedImg ? `<img alt="회사 공통 사진" src="${sharedImg}">` : '<div class="sub">회사 사진 없이 명함만 나갑니다.</div>'}
+      <div class="sub">${sharedEntry ? kb(sharedEntry.bytes) + " · 모든 문자에 두 번째 사진으로" : ""}</div>
+      <div class="row"><button class="small" data-go="shared">회사 사진 바꾸기</button></div>
+    </div>`;
+  for (const b of $("ov-cards").querySelectorAll("[data-go]")) b.onclick = () => showTab(b.dataset.go);
+  $("btn-copy-link").onclick = async () => {
+    try { await navigator.clipboard.writeText(INSTALL_URL); setStatus("설치 링크를 복사했습니다", "ok"); }
+    catch (e) { showDialog("설치 링크", `<p>직접 복사하세요.</p><pre class="json">${esc(INSTALL_URL)}</pre>`); }
+  };
+
+  const g = $("ov-glance");
+  if (!state.templates.length) { g.innerHTML = '<div class="empty">문구가 없습니다.</div>'; return; }
+  g.innerHTML = state.templates.map((t) => {
+    const staff = worstStaffFor(t);
+    const who = (t.staff && t.staff.length) ? `${t.staff.join(", ")} 전용` : "모든 직원";
+    const kinds = (t.rules || []).map((x) => (RULES.find((y) => y[0] === x) || [, x])[1]).join(" · ") || "직원이 직접 고를 때";
+    return `<div class="g"><h4>${esc(t.name)}</h4><div class="meta">${esc(kinds)} · ${esc(who)}</div><pre>${esc(render((t.body || "").trim(), staff, 10))}</pre></div>`;
+  }).join("");
+}
+
+// ---- 명부·사진 ----
+function mime(type) { return type === "jpg" || type === "jpeg" ? "image/jpeg" : type === "png" ? "image/png" : "image/webp"; }
+function dataUrl(entry) {
+  if (!entry || !entry.file) return "";
+  const b64 = state.staged[entry.file] || state.files[entry.file];
+  return b64 ? `data:${mime(entry.type)};base64,${b64}` : "";
+}
+
+/** 배포처의 staff.json 을 화면 형태로. 형식 1(사진 목록 없음)이면 이름·직함만 있고 개정 0 이다. */
+function normalizeRoster(obj) {
+  const r = obj || {};
+  const v2 = r.format === 2;
+  const staff = (r.staff || []).map((s, i) => ({
+    name: String(s.name || "").normalize("NFC").trim(),
+    title: String(s.title || "").normalize("NFC").trim(),
+    order: Number(s.order) || i + 1,
+    card: v2 && s.card && s.card.file ? { file: s.card.file, type: s.card.type || "jpg", bytes: s.card.bytes || 0, sha256: s.card.sha256 || "" } : null,
+  })).sort((a, b) => a.order - b.order);
+  const shared = v2 ? (r.shared || []).filter((x) => x && x.file).map((x) => ({ file: x.file, type: x.type || "jpg", bytes: x.bytes || 0, sha256: x.sha256 || "" })) : [];
+  return { roster: { format: 2, revision: v2 ? (Number(r.revision) || 0) : 0, staff, shared }, format: r.format || 0 };
+}
+
+function rosterIssues() {
+  const issues = [];
+  const add = (level, text) => issues.push({ level, text });
+  const r = state.roster;
+  if (!state.rosterSupported) { add("e", "이 자리에서는 명부·사진을 고칠 수 없습니다(로컬 서버가 옛 버전입니다)."); return issues; }
+  if (state.rosterFormat && state.rosterFormat < 2) {
+    add("e", "배포처에 사진 목록이 아직 없습니다(옛 형식). 먼저 내 맥에서 scripts/publish-images.sh 를 한 번 실행해 지금 앱의 사진을 올린 뒤 여기서 고치세요.");
+  }
+  if (r.staff.length > PHOTO.maxStaff) add("e", `직원은 ${PHOTO.maxStaff}명까지입니다.`);
+  const seen = new Set();
+  r.staff.forEach((s, i) => {
+    const who = s.name || `${i + 1}번째 직원`;
+    if (!s.name) add("e", `${i + 1}번째 직원의 이름이 비었습니다.`);
+    if (s.name.length > PHOTO.maxName) add("e", `${who}: 이름이 ${PHOTO.maxName}자를 넘습니다.`);
+    if (s.title.length > PHOTO.maxTitle) add("e", `${who}: 직함이 ${PHOTO.maxTitle}자를 넘습니다.`);
+    const key = s.name.replace(/\s+/g, "").toLowerCase();
+    if (key && seen.has(key)) add("e", `${who}: 같은 이름이 두 번 있습니다. 폰은 이름으로 명함을 찾으므로 구분이 안 됩니다.`);
+    seen.add(key);
+    if (PHONE_RE.test(s.name + " " + s.title)) add("e", `${who}: 전화번호는 넣지 않습니다.`);
+    if (s.card) {
+      if (!FILE_RE.test(s.card.file)) add("e", `${who}: 명함 파일 이름이 규칙에 맞지 않습니다.`);
+      if (s.card.bytes > PHOTO.maxBytes) add("e", `${who}: 명함이 ${kb(s.card.bytes)} 입니다. 1MB 를 넘으면 폰이 받지 않습니다.`);
+      else if (s.card.bytes > PHOTO.warnBytes) add("w", `${who}: 명함이 ${kb(s.card.bytes)} 입니다. 문자 한 통에 사진 2장이 들어가므로 400KB 아래를 권합니다.`);
+      if (!state.staged[s.card.file] && !state.files[s.card.file]) add("e", `${who}: 명함 사진 파일이 배포처에 없습니다. 다시 올리세요.`);
+    } else {
+      add("w", `${who}: 명함이 없어 회사 사진만 붙습니다.`);
+    }
+  });
+  r.shared.forEach((x) => {
+    if (!FILE_RE.test(x.file)) add("e", "회사 사진 파일 이름이 규칙에 맞지 않습니다.");
+    if (x.bytes > PHOTO.maxBytes) add("e", `회사 사진이 ${kb(x.bytes)} 입니다. 1MB 를 넘으면 폰이 받지 않습니다.`);
+    else if (x.bytes > PHOTO.warnBytes) add("w", `회사 사진이 ${kb(x.bytes)} 입니다. 400KB 아래를 권합니다.`);
+    if (!state.staged[x.file] && !state.files[x.file]) add("e", "회사 사진 파일이 배포처에 없습니다. 다시 올리세요.");
+  });
+  if (!r.shared.length) add("w", "회사 사진이 없습니다. 모든 문자가 명함만 달고 나갑니다.");
+  return issues;
+}
+
+function drawRosterIssues() {
+  const issues = rosterIssues();
+  $("roster-issues").innerHTML = issues.map((x) => `<li class="${x.level}">${esc(x.text)}</li>`).join("");
+  const errors = issues.filter((x) => x.level === "e").length;
+  for (const id of ["btn-roster-save", "btn-roster-save-2"]) {
+    $(id).disabled = errors > 0 || !state.rosterDirty;
+    $(id).textContent = errors > 0 ? `고칠 곳 ${errors}군데` : state.rosterDirty ? "직원 폰에 반영하기" : "고친 것 없음";
+  }
+  const staged = Object.keys(state.staged).length;
+  $("rosterline").textContent = `직원 ${state.roster.staff.length}명 · 명부 개정 ${state.roster.revision}${state.rosterDirty ? " · 고친 내용 있음" : ""}${staged ? ` · 새 사진 ${staged}장` : ""}`;
+  $("sharedline").textContent = `명부 개정 ${state.roster.revision}${state.rosterDirty ? " · 고친 내용 있음" : ""}`;
+  drawTabs();
+}
+
+function drawRoster() {
+  const ul = $("roster");
+  const r = state.roster;
+  ul.innerHTML = "";
+  r.staff.forEach((s, i) => {
+    const li = document.createElement("li");
+    if (s._new) li.className = "new";
+    const img = dataUrl(s.card);
+    li.innerHTML = `
+      <div class="thumb">${img ? `<img alt="" src="${img}">` : "명함 없음"}</div>
+      <div class="fields"><span class="n">${i + 1}</span>
+        <input type="text" data-name="${i}" maxlength="${PHOTO.maxName}" placeholder="이름" value="${esc(s.name)}">
+        <input type="text" data-title="${i}" maxlength="${PHOTO.maxTitle}" placeholder="직함" value="${esc(s.title)}"></div>
+      <div class="ractions">
+        <label class="filebtn">${s.card ? "명함 바꾸기" : "명함 올리기"}<input type="file" accept="image/*" data-file="${i}" hidden></label>
+        ${s.card ? `<button class="small" data-nocard="${i}">명함 지우기</button>` : ""}
+        <button class="small danger" data-remove="${i}">직원 삭제</button>
+      </div>
+      <div class="mv"><button class="small" data-up="${i}">▲</button><button class="small" data-down="${i}">▼</button></div>
+      <div class="meta">${s.card ? `명함 ${kb(s.card.bytes)}${state.staged[s.card.file] ? " · 아직 올리지 않음" : ""}` : "폰 마이페이지에서 이 이름을 고른 직원의 문자에는 회사 사진만 붙습니다"}</div>`;
+    ul.appendChild(li);
+  });
+  if (!r.staff.length) ul.innerHTML = '<div class="empty">직원이 없습니다. "직원 추가" 를 누르세요.</div>';
+
+  ul.querySelectorAll("[data-name]").forEach((el) => { el.oninput = () => { r.staff[+el.dataset.name].name = el.value.normalize("NFC"); touchRosterLight(); }; });
+  ul.querySelectorAll("[data-title]").forEach((el) => { el.oninput = () => { r.staff[+el.dataset.title].title = el.value.normalize("NFC"); touchRosterLight(); }; });
+  ul.querySelectorAll("[data-file]").forEach((el) => { el.onchange = () => pickPhoto(el.files[0], "card", (photo) => { r.staff[+el.dataset.file].card = photo; touchRoster(); }); });
+  ul.querySelectorAll("[data-nocard]").forEach((el) => { el.onclick = () => { r.staff[+el.dataset.nocard].card = null; touchRoster(); }; });
+  ul.querySelectorAll("[data-remove]").forEach((el) => {
+    el.onclick = () => {
+      const s = r.staff[+el.dataset.remove];
+      if (!confirm(`"${s.name || "이 직원"}" 을 명부에서 지웁니다. 반영하면 폰의 명함첩에서도 사라집니다.`)) return;
+      r.staff.splice(+el.dataset.remove, 1); touchRoster();
+    };
+  });
+  ul.querySelectorAll("[data-up]").forEach((el) => { el.onclick = () => moveStaff(+el.dataset.up, -1); });
+  ul.querySelectorAll("[data-down]").forEach((el) => { el.onclick = () => moveStaff(+el.dataset.down, 1); });
+  $("btn-staff-add").disabled = !state.rosterSupported;
+  drawRosterIssues();
+}
+
+function drawShared() {
+  const x = state.roster.shared[0];
+  const img = dataUrl(x);
+  $("shared-view").innerHTML = x
+    ? `${img ? `<img alt="회사 공통 사진" src="${img}">` : '<div class="empty">사진 파일을 불러오지 못했습니다.</div>'}<div class="hint" style="margin-top:6px">${kb(x.bytes)}${state.staged[x.file] ? " · 아직 올리지 않음" : ""}</div>`
+    : '<div class="empty">회사 사진이 없습니다. 모든 문자가 명함만 달고 나갑니다.</div>';
+  $("btn-shared-del").hidden = !x;
+}
+
+function moveStaff(i, d) {
+  const j = i + d, list = state.roster.staff;
+  if (j < 0 || j >= list.length) return;
+  const [x] = list.splice(i, 1);
+  list.splice(j, 0, x);
+  touchRoster();
+}
+function touchRoster() { state.rosterDirty = true; syncStaffFromRoster(); drawRoster(); drawShared(); drawOverview(); drawTemplates(); }
+function touchRosterLight() { state.rosterDirty = true; syncStaffFromRoster(); drawRosterIssues(); }
+/** 문구 편집기의 "받는 직원" 목록은 명부를 따른다. */
+function syncStaffFromRoster() {
+  state.staff = state.roster.staff.filter((s) => s.name).map((s) => ({ name: s.name, title: s.title, hasCard: !!s.card }));
+}
+
+/** 사진을 브라우저 안에서 줄이고(긴 변 1280px, JPEG) 해시를 계산해 명부 항목을 만든다. 원본은 어디에도 올라가지 않는다. */
+async function shrinkPhoto(file) {
+  if (!file) throw new Error("파일을 고르지 않았습니다.");
+  if (!/^image\//.test(file.type)) throw new Error("사진 파일이 아닙니다. JPG·PNG 를 골라 주세요.");
+  let bmp;
+  try { bmp = await createImageBitmap(file, { imageOrientation: "from-image" }); }
+  catch (e) { try { bmp = await createImageBitmap(file); } catch (e2) { throw new Error("이 사진은 브라우저가 열지 못합니다(HEIC 등). JPG 로 바꿔서 올려 주세요."); } }
+  const scale = Math.min(1, PHOTO.maxSide / Math.max(bmp.width, bmp.height));
+  const w = Math.max(1, Math.round(bmp.width * scale)), h = Math.max(1, Math.round(bmp.height * scale));
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);   // 투명 PNG 가 검게 되지 않도록
+  ctx.drawImage(bmp, 0, 0, w, h);
+  if (bmp.close) bmp.close();
+  const blob = await new Promise((res) => c.toBlob(res, "image/jpeg", PHOTO.quality));
+  if (!blob) throw new Error("사진을 변환하지 못했습니다.");
+  const buf = await blob.arrayBuffer();
+  if (!crypto.subtle) throw new Error("이 브라우저에서는 사진을 올릴 수 없습니다(보안 연결이 아닙니다).");
+  const sha256 = [...new Uint8Array(await crypto.subtle.digest("SHA-256", buf))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  const b64 = await new Promise((res, rej) => { const rd = new FileReader(); rd.onload = () => res(String(rd.result).split(",")[1]); rd.onerror = rej; rd.readAsDataURL(blob); });
+  return { type: "jpg", bytes: buf.byteLength, sha256, b64, width: w, height: h };
+}
+
+function pickPhoto(file, kind, assign) {
+  if (!file) return;
+  setStatus("사진 줄이는 중…", "busy");
+  shrinkPhoto(file).then((p) => {
+    const name = `${kind}-${p.sha256.slice(0, 12)}.b64`;
+    if (!state.files[name]) state.staged[name] = p.b64;
+    assign({ file: name, type: p.type, bytes: p.bytes, sha256: p.sha256 });
+    setStatus(`사진 준비됨 · ${p.width}×${p.height} · ${kb(p.bytes)}`, p.bytes > PHOTO.warnBytes ? "warn" : "ok");
+  }).catch((e) => { setStatus("사진을 넣지 못했습니다", "bad"); showDialog("사진을 넣지 못했습니다", `<p>${esc(e.message)}</p>`); });
+}
+
+/** 배포처로 보낼 staff.json(형식 2). 순번은 화면 순서, 전화번호 없음. */
+function rosterPayload() {
+  const r = state.roster;
+  return {
+    format: 2,
+    revision: r.revision + 1,
+    note: "직원 명부와 사진 목록. 현황판(웹)에서 고친다. 전화번호는 넣지 않는다.",
+    staff: r.staff.map((s, i) => {
+      const o = { name: s.name.trim(), title: s.title.trim(), order: i + 1, hasCard: !!s.card };
+      if (s.card) o.card = { file: s.card.file, type: s.card.type, bytes: s.card.bytes, sha256: s.card.sha256 };
+      return o;
+    }),
+    shared: r.shared.map((x) => ({ file: x.file, type: x.type, bytes: x.bytes, sha256: x.sha256 })),
+  };
+}
+
+async function saveRoster() {
+  const issues = rosterIssues();
+  if (issues.some((x) => x.level === "e")) return;
+  const roster = rosterPayload();
+  const referenced = new Set([...roster.staff.filter((s) => s.card).map((s) => s.card.file), ...roster.shared.map((x) => x.file)]);
+  const put = {};
+  for (const name of referenced) if (!state.files[name] && state.staged[name]) put[name] = state.staged[name];
+  const del = Object.keys(state.files).filter((n) => !referenced.has(n));
+  const withCard = roster.staff.filter((s) => s.card).length;
+  const msg = `직원 ${roster.staff.length}명(명함 ${withCard}장), 회사 사진 ${roster.shared.length}장을 명부 개정 ${roster.revision} 으로 올립니다.\n\n` +
+    (Object.keys(put).length ? `새로 올라가는 사진 ${Object.keys(put).length}장\n` : "") + (del.length ? `지워지는 사진 파일 ${del.length}개\n` : "") +
+    "\n앱 v0.26 이상인 직원 폰은 앱을 열거나 통화 팝업이 닫힐 때 받아 갑니다(최대 1시간).";
+  if (!confirm(msg)) return;
+  setStatus("올리는 중…", "busy");
+  for (const id of ["btn-roster-save", "btn-roster-save-2"]) $(id).disabled = true;
+  try {
+    const res = await backend.saveRoster({ roster, put, delete: del });
+    const files = {};
+    for (const name of referenced) files[name] = state.files[name] || state.staged[name];
+    state.files = files; state.staged = {};
+    const n = normalizeRoster(roster);
+    state.roster = n.roster; state.rosterFormat = 2; state.rosterDirty = false;
+    if (res && res.revision) state.roster.revision = res.revision;
+    syncStaffFromRoster();
+    setStatus(`반영했습니다 · 명부 개정 ${state.roster.revision}`, "ok");
+    showDialog("직원 폰에 반영합니다", `<p>명부 개정 <b>${state.roster.revision}</b> 으로 올렸습니다. 직원 ${roster.staff.length}명, 회사 사진 ${roster.shared.length}장.</p>
+      <p>앱 <b>v0.26 이상</b>인 폰은 앱을 열거나 통화 팝업이 닫힐 때 새 사진을 받아 갑니다. 늦어도 1시간.</p>
+      <p class="hint">지금 바로 확인하려면 폰 설정 화면의 "공통 문구·사진 지금 확인" 을 누르세요.</p>`);
+  } catch (e) {
+    setStatus("반영하지 못했습니다", "bad");
+    showDialog("반영하지 못했습니다", `<pre class="json">${esc(e.message)}</pre>
+      <p class="hint">${backend.needsToken ? "열쇠가 만료됐거나 권한이 없을 수 있습니다. 오른쪽 위 ‘열쇠 바꾸기’ 로 새 열쇠를 넣어 보세요." : "터미널에서 <code>gh auth status</code> 로 로그인을 확인하세요."}</p>`);
+  }
+  drawAll();
+}
+
+$("btn-staff-add").onclick = () => {
+  state.roster.staff.push({ name: "", title: "", order: state.roster.staff.length + 1, card: null, _new: true });
+  touchRoster();
+  const inputs = $("roster").querySelectorAll("[data-name]");
+  if (inputs.length) inputs[inputs.length - 1].focus();
+};
+$("btn-roster-save").onclick = saveRoster;
+$("btn-roster-save-2").onclick = saveRoster;
+$("shared-file").onchange = (e) => { pickPhoto(e.target.files[0], "shared", (photo) => { state.roster.shared = [photo]; touchRoster(); }); e.target.value = ""; };
+$("btn-shared-del").onclick = () => {
+  if (!confirm("회사 사진 없이 명함만 보내도록 바꿉니다. 반영하면 모든 폰에 적용됩니다.")) return;
+  state.roster.shared = []; touchRoster();
+};
+
 // ---- 배포처와 주고받기 ----
 //
 // 이 화면은 두 가지 자리에서 똑같이 돈다.
@@ -444,9 +876,13 @@ function setStatus(text, kind) { const el = $("status"); el.textContent = text; 
 //   2) GitHub Pages 에 올려 두고 어디서나 열 때 — 서버가 없으므로 브라우저가 GitHub API 로 직접 다룬다.
 // 어느 쪽인지는 시작할 때 /api/catalog 를 한 번 찔러 보고 정한다.
 
-const GIST_ID = "cd91dda6443ffb827d7f9a69740e0b35";  // 직원 폰들이 문구를 받아 가는 배포처(앱에도 같은 값이 박혀 있다)
+const GIST_ID = "cd91dda6443ffb827d7f9a69740e0b35";  // 직원 폰들이 문구·사진을 받아 가는 배포처(앱에도 같은 값이 박혀 있다)
+const GIST_OWNER = "firearly1-jayk";
 const TEMPLATES_FILE = "templates.json";
 const STAFF_FILE = "staff.json";
+const VERSION_FILE = "version.json";
+const DIST_REPO = "firearly1-jayk/callbackmate-dist";
+const INSTALL_URL = `https://github.com/${DIST_REPO}/releases/latest/download/callbackmate-enterprise.apk`;
 const TOKEN_KEY = "cbm.token";
 
 const api = (path, opts) => fetch(path, opts).then(async (r) => {
@@ -462,8 +898,15 @@ const serverBackend = {
   needsToken: false,
   async load() {
     const [catalog, staff] = await Promise.all([api("/api/catalog"), api("/api/staff")]);
+    let roster = null, files = {}, rosterSupported = true;
+    try {
+      const r = await api("/api/roster");
+      roster = r.roster; files = r.files || {};
+    } catch (e) { rosterSupported = false; }
+    let version = null;
+    try { version = await (await fetch(`https://gist.githubusercontent.com/${GIST_OWNER}/${GIST_ID}/raw/${VERSION_FILE}?t=${Date.now()}`, { cache: "no-store" })).json(); } catch (e) { /* 현황에 "확인 중" 으로 남는다 */ }
     return {
-      catalog: catalog.catalog, staff: staff.staff || [],
+      catalog: catalog.catalog, staff: staff.staff || [], roster, files, rosterSupported, version,
       source: catalog.source || "", canPublish: catalog.canPublish !== false,
     };
   },
@@ -472,6 +915,9 @@ const serverBackend = {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
     });
     return res.source || "";
+  },
+  async saveRoster(body) {
+    return api("/api/roster", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   },
 };
 
@@ -494,6 +940,7 @@ const githubBackend = {
     if (res.status === 401) throw new Error("열쇠가 맞지 않습니다. 다시 만들어 넣어 주세요.");
     if (res.status === 403) throw new Error("이 열쇠에는 gist 권한이 없습니다. 열쇠를 만들 때 gist 를 골랐는지 보세요.");
     if (res.status === 404) throw new Error("배포처를 찾지 못했습니다. 이 열쇠가 배포처 주인의 것인지 보세요.");
+    if (res.status === 422) throw new Error("배포처가 이 변경을 받지 않았습니다(422). 다시 불러온 뒤 다시 해 보세요.");
     if (!res.ok) throw new Error("GitHub 응답 " + res.status);
     this.scopes = (res.headers.get("x-oauth-scopes") || "").split(",").map((v) => v.trim()).filter(Boolean);
     return res.json();
@@ -502,14 +949,35 @@ const githubBackend = {
     const entry = (gist.files || {})[name];
     return entry ? entry.content : null;
   },
+  /**
+   * 배포처 API 는 파일 내용을 합계 약 1MB 까지만 인라인으로 주고 그 뒤 파일은 빈 값 + truncated 로 온다
+   * (사진 9장이면 staff.json·templates.json 까지 잘린다). 잘린 파일은 그 개정의 raw 주소로 다시 받는다.
+   */
+  async fileFull(gist, name) {
+    const entry = (gist.files || {})[name];
+    if (!entry) return null;
+    if (!entry.truncated) return entry.content;
+    const res = await fetch(entry.raw_url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`사진 파일을 받지 못했습니다 (${res.status})`);
+    return res.text();
+  },
   async load() {
     const gist = await this.call("GET");
-    const templatesText = this.fileText(gist, TEMPLATES_FILE);
-    const staffText = this.fileText(gist, STAFF_FILE);
+    const [templatesText, staffText, versionText] = await Promise.all([
+      this.fileFull(gist, TEMPLATES_FILE), this.fileFull(gist, STAFF_FILE), this.fileFull(gist, VERSION_FILE),
+    ]);
     const catalog = templatesText ? JSON.parse(templatesText) : { format: 1, revision: 0, name: "", templates: [] };
-    const staff = staffText ? (JSON.parse(staffText).staff || []) : [];
+    const roster = staffText ? JSON.parse(staffText) : { format: 2, revision: 0, staff: [], shared: [] };
+    const staff = (roster.staff || []).map((s) => ({ name: s.name, title: s.title || "", hasCard: !!(s.hasCard || (s.card && s.card.file)) }));
+    const wanted = [...(roster.staff || []).filter((s) => s.card && s.card.file).map((s) => s.card.file), ...(roster.shared || []).map((x) => x.file)];
+    const files = {};
+    const okNames = wanted.filter((name) => FILE_RE.test(name));
+    const texts = await Promise.all(okNames.map((name) => this.fileFull(gist, name)));
+    okNames.forEach((name, i) => { if (texts[i]) files[name] = texts[i].trim(); });
+    let version = null;
+    try { version = versionText ? JSON.parse(versionText) : null; } catch (e) { /* 없으면 없는 대로 */ }
     return {
-      catalog, staff,
+      catalog, staff, roster, files, rosterSupported: true, version,
       source: templatesText ? `배포처(개정 ${catalog.revision || 0})` : "배포처에 문구가 아직 없습니다",
       canPublish: true,
     };
@@ -517,6 +985,21 @@ const githubBackend = {
   async publish(body) {
     await this.call("PATCH", { files: { [TEMPLATES_FILE]: { content: JSON.stringify(body, null, 2) + "\n" } } });
     return `배포처(개정 ${body.revision})`;
+  },
+  async saveRoster({ roster, put, delete: del }) {
+    // 그 사이 다른 데서 명부를 고쳤으면 덮어쓰지 않는다.
+    const gist = await this.call("GET");
+    const currentText = await this.fileFull(gist, STAFF_FILE);
+    let currentRev = 0;
+    try { const cur = currentText ? JSON.parse(currentText) : null; currentRev = cur && cur.format === 2 ? (Number(cur.revision) || 0) : 0; } catch (e) { currentRev = 0; }
+    if (roster.revision !== currentRev + 1) {
+      throw new Error(`배포처의 명부가 그 사이 바뀌었습니다(지금 개정 ${currentRev}). "다시 불러오기" 를 누른 뒤 다시 고치세요.`);
+    }
+    const files = { [STAFF_FILE]: { content: JSON.stringify(roster, null, 2) + "\n" } };
+    for (const [name, b64] of Object.entries(put)) if (FILE_RE.test(name)) files[name] = { content: b64 };
+    for (const name of del) if (FILE_RE.test(name) && gist.files && gist.files[name]) files[name] = null;
+    await this.call("PATCH", { files });
+    return { ok: true, revision: roster.revision };
   },
 };
 
@@ -560,21 +1043,39 @@ function showGate(message) {
   $("gate-token").focus();
 }
 
+/** 최신 앱의 배포일. 공개 저장소라 열쇠 없이도 읽힌다. 실패해도 현황판은 그대로 뜬다. */
+async function loadRelease() {
+  try {
+    const headers = { Accept: "application/vnd.github+json" };
+    if (backend === githubBackend && githubBackend.token) headers.Authorization = "Bearer " + githubBackend.token;
+    const res = await fetch(`https://api.github.com/repos/${DIST_REPO}/releases/latest`, { headers, cache: "no-store" });
+    if (res.ok) { state.release = await res.json(); drawOverview(); }
+  } catch (e) { /* 배포일만 빠진다 */ }
+}
+
 async function load() {
   setStatus("불러오는 중…", "busy");
   try {
     const result = await backend.load();
-    state.staff = result.staff;
     state.name = result.catalog.name || "";
     state.revision = result.catalog.revision || 0;
     state.templates = (result.catalog.templates || []).map((t) => ({
       key: t.key, name: t.name, body: t.body, rules: t.rules || [], staff: t.staff || [],
     }));
-    state.sel = 0; state.dirty = false; state.source = result.source; state.canPublish = result.canPublish;
+    const n = normalizeRoster(result.roster);
+    state.roster = n.roster; state.rosterFormat = n.format;
+    state.files = result.files || {}; state.staged = {};
+    state.rosterSupported = result.rosterSupported !== false;
+    state.staff = state.rosterSupported && state.roster.staff.length
+      ? state.roster.staff.map((s) => ({ name: s.name, title: s.title, hasCard: !!s.card }))
+      : result.staff;
+    state.version = result.version || null;
+    state.sel = 0; state.dirty = false; state.rosterDirty = false; state.source = result.source; state.canPublish = result.canPublish;
     setStatus("불러왔습니다", "ok");
     if (backend === githubBackend && (githubBackend.scopes || []).some((s) => s !== "gist")) {
       setStatus("불러왔습니다 · 열쇠 권한이 넓습니다", "warn");
     }
+    loadRelease();
   } catch (e) {
     if (backend.needsToken) { showGate(e.message); return; }
     setStatus("불러오지 못했습니다: " + e.message, "bad");
@@ -618,7 +1119,7 @@ async function publish() {
     setStatus("배포하지 못했습니다", "bad");
     showDialog("배포하지 못했습니다", `<pre class="json">${esc(e.message)}</pre>
       <p class="hint">${backend.needsToken
-        ? "열쇠가 만료됐거나 권한이 없을 수 있습니다. 오른쪽 위 \u2018열쇠 바꾸기\u2019 로 새 열쇠를 넣어 보세요."
+        ? "열쇠가 만료됐거나 권한이 없을 수 있습니다. 오른쪽 위 ‘열쇠 바꾸기’ 로 새 열쇠를 넣어 보세요."
         : "터미널에서 <code>gh auth status</code> 로 로그인을 확인하세요."}</p>`);
   }
   drawAll();
@@ -671,7 +1172,7 @@ $("btn-del").onclick = () => {
   touch();
 };
 $("btn-reload").onclick = () => {
-  if (state.dirty && !confirm("고친 내용이 사라집니다. 다시 불러올까요?")) return;
+  if ((state.dirty || state.rosterDirty) && !confirm("고친 내용이 사라집니다. 다시 불러올까요?")) return;
   load();
 };
 $("btn-download").onclick = download;
@@ -679,7 +1180,7 @@ $("btn-publish").onclick = publish;
 $("dlg-close").onclick = () => $("dlg").close();
 $("prev-staff").onchange = drawPreview;
 $("prev-time").onchange = drawPreview;
-window.addEventListener("beforeunload", (e) => { if (state.dirty) { e.preventDefault(); e.returnValue = ""; } });
+window.addEventListener("beforeunload", (e) => { if (state.dirty || state.rosterDirty) { e.preventDefault(); e.returnValue = ""; } });
 
 // ---- 시작 ----
 $("gate-enter").onclick = async () => {
@@ -698,19 +1199,21 @@ $("gate-enter").onclick = async () => {
   }
   rememberToken(token, $("gate-remember").checked);
   $("gate-token").value = "";
+  $("gate-status").hidden = true;
   $("gate").hidden = true;
   load();
 };
 $("gate-token").addEventListener("keydown", (e) => { if (e.key === "Enter") $("gate-enter").click(); });
 
 $("btn-token").onclick = () => {
-  if (state.dirty && !confirm("고친 내용이 사라집니다. 열쇠를 바꿀까요?")) return;
+  if ((state.dirty || state.rosterDirty) && !confirm("고친 내용이 사라집니다. 열쇠를 바꿀까요?")) return;
   forgetToken();
-  state.dirty = false;
+  state.dirty = false; state.rosterDirty = false;
   showGate("");
 };
 
 (async function start() {
+  showTab(location.hash.slice(1));
   backend = await pickBackend();
   if (!backend.needsToken) { load(); return; }
   $("btn-token").hidden = false;
