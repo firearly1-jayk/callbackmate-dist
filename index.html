@@ -130,7 +130,10 @@
   ul.roster .ractions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
   ul.roster .meta { font-size: 12px; color: var(--muted); width: 100%; padding-left: 180px; }
   ul.roster li.new { border-color: var(--brand); }
-  .shared-view img { max-width: 420px; width: 100%; border-radius: 8px; border: 1px solid var(--line); background: #fff; }
+  ul.shared-list .thumb { width: 96px; height: 128px; }
+  ul.shared-list .fields b { font-size: 13.5px; }
+  .card .thumbs { display: flex; gap: 6px; align-items: flex-start; }
+  .card .thumbs img { width: auto; height: 96px; max-width: 32%; object-fit: contain; }
   .badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: #fdf3e2; color: #7c4a06; margin-left: 6px; }
 
   #gate { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 50; }
@@ -207,7 +210,7 @@
         <select id="prev-staff" style="font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line)"></select>
         <select id="prev-time" style="font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line)">
           <option value="10">낮에 보낼 때</option>
-          <option value="21">밤 8시 이후</option>
+          <option value="19">저녁 6시 이후</option>
         </select>
       </div>
       <div class="phone">
@@ -215,7 +218,7 @@
       </div>
       <div class="counts" id="counts"></div>
       <ul class="issues" id="issues"></ul>
-      <p class="note">사진 2장(회사 소개·담당자 명함)이 이 글과 함께 한 통으로 나갑니다. 명함에 있는 대표번호·주소·홈페이지는 글에 다시 쓰지 않습니다.</p>
+      <p class="note" id="photo-note">담당자 명함과 회사 사진이 이 글과 함께 한 통으로 나갑니다. 명함에 있는 대표번호·주소·홈페이지는 글에 다시 쓰지 않습니다.</p>
       <p class="note"><b>어떤 전화에 쓸지</b>를 고른 문구는 그 통화 뒤 팝업에 <b>먼저 뜹니다</b>. 고르지 않은 문구도 팝업 목록에 모두 나오며 직원이 상황에 맞게 고릅니다.</p>
     </section>
   </main>
@@ -233,7 +236,7 @@
     <div class="panel">
       <ul class="roster" id="roster"></ul>
       <ul class="issues" id="roster-issues"></ul>
-      <p class="note">명함 사진은 이 브라우저 안에서 긴 변 1280px 로 줄여 올립니다(원본은 올라가지 않습니다). 문자 한 통에 사진 2장이 들어가므로 400KB 를 넘으면 경고합니다.</p>
+      <p class="note">명함 사진은 이 브라우저 안에서 긴 변 1280px 로 줄여 올립니다(원본은 올라가지 않습니다). 문자 한 통에 명함과 회사 사진이 함께 들어가므로 400KB 를 넘으면 경고합니다.</p>
       <p class="note">직원을 지우면 그 명함도 함께 사라집니다. 이름을 바꾸면 「문구」 탭에서 그 사람 전용으로 지정한 문구가 풀리니 다시 지정하세요.</p>
     </div>
   </div>
@@ -249,12 +252,14 @@
   <div class="wrap">
     <div class="panel">
       <h2>모든 직원의 안내 문자에 함께 나가는 회사 사진</h2>
-      <div class="shared-view" id="shared-view"></div>
+      <ul class="roster shared-list" id="shared-list"></ul>
       <div class="row" style="margin-top:10px">
-        <label class="filebtn">사진 바꾸기<input type="file" accept="image/*" id="shared-file" hidden></label>
-        <button class="small danger" id="btn-shared-del">사진 없이 보내기</button>
+        <label class="filebtn">+ 사진 추가<input type="file" accept="image/*" id="shared-file" hidden></label>
+        <span class="hint" id="shared-sum"></span>
       </div>
-      <p class="note">명함이 먼저, 이 사진이 두 번째로 붙습니다. 언론보도·수상 실적처럼 <b>회사가 어떤 곳인지</b> 한 장으로 보여 주는 사진을 두세요. 글에 다시 쓸 필요가 없는 정보(대표번호·주소)는 사진에 두는 것이 낫습니다.</p>
+      <ul class="issues" id="shared-issues"></ul>
+      <p class="note">명함이 첫 장, 여기 사진들이 순서대로 뒤에 붙습니다. 회사 사진은 3장까지(명함까지 한 통에 4장). 장수와 용량이 늘수록 받는 폰에서 스크롤이 길어지고 한 통 용량 한도(약 900KB)에 가까워집니다.</p>
+      <p class="note">언론보도·수상 실적·인증처럼 <b>회사가 어떤 곳인지</b> 보여 주는 사진을 두세요. 글에 다시 쓸 필요가 없는 정보(대표번호·주소)는 사진에 두는 것이 낫습니다. 용량이 넘치면 앱이 먼저 화질을 낮추고, 그래도 넘치면 <b>뒤에서부터</b> 뺍니다(명함은 남습니다).</p>
     </div>
   </div>
 </section>
@@ -302,9 +307,19 @@ const PHOTO_ONLY = ["1688-0239", "irumbiz.com", "청라커낼로", "사업자등
 const MONEY = /\d[\d,.]*\s*(억|천만|백만|만|천)?\s*원/;
 const KEY_RE = /^[a-z0-9][a-z0-9_-]*$/;
 const WORST = { name: "남궁민수", title: "수석컨설턴트" };  // 이름+직함 10자, 앱의 경고 상한
+// {약속시점}: 이 시각부터 "내일 오전까지". 앱 TemplateVariables.DEADLINE_CUTOFF_HOUR=18 과 같다(상담시간 10:00~19:00).
+const DEADLINE_CUTOFF_HOUR = 18;
+const CHECK_HOURS = [10, 19];  // 낮 / 저녁(상담 마감 직전) 두 판으로 길이를 검사한다
 
 // ---- 사진·명부 규칙 (docs/ADR-010, domain/images/) ----
 const PHOTO = { maxSide: 1280, quality: 0.85, warnBytes: 400 * 1024, maxBytes: 1024 * 1024, maxStaff: 50, maxName: 20, maxTitle: 20 };
+// 회사 사진은 목록이고 앱(v0.26)은 명함 뒤에 순서대로 모두 붙인다. 통신사 한 통 한도 약 900KB(MmsSender.MAX_MEDIA_BYTES)에서
+// 명함 몫을 빼고 본 상한. 넘치면 앱이 화질을 낮추고 그래도 넘치면 뒤에서부터 뺀다(fitToLimit). 서버(templates_web.py)는 5장까지 받지만 화면은 3장까지만 권한다.
+const SHARED = { maxCount: 3, warnBytes: 450 * 1024, maxBytes: 700 * 1024, mmsLimit: 900 * 1024 };
+const ORDINAL = ["첫째", "둘째", "셋째", "넷째", "다섯째", "여섯째"];
+/** 문자 안에서 i(0부터)번째 사진의 자리 이름. 명함이 언제나 첫째 장이므로 회사 사진 1번은 둘째 장이다. */
+const nthPhoto = (i) => (ORDINAL[i] || `${i + 1}번째`) + " 장";
+const sharedBytes = () => state.roster.shared.reduce((n, x) => n + (x.bytes || 0), 0);
 const FILE_RE = /^(card|shared)-[0-9a-f]{12}\.b64$/;
 const PHONE_RE = /01[016789][-. ]?\d{3,4}[-. ]?\d{4}/;
 
@@ -320,7 +335,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 const kb = (n) => `${Math.round((n || 0) / 1024)}KB`;
 
 function render(body, staff, hour) {
-  const deadline = hour >= 20 ? "내일 오전까지" : "오늘 안에";
+  const deadline = hour >= DEADLINE_CUTOFF_HOUR ? "내일 오전까지" : "오늘 안에";
   return body
     .split("{담당자명}").join(staff.name)
     .split("{담당자직함}").join(staff.title)
@@ -368,19 +383,19 @@ function checkTemplate(t, index) {
   if (body.length > LIMITS.maxBody) add("e", `내용이 ${LIMITS.maxBody}자를 넘습니다.`);
 
   const staff = worstStaffFor(t);
-  for (const hour of [10, 21]) {
+  for (const hour of CHECK_HOURS) {
     const text = render(body, staff, hour);
-    const when = hour >= 20 ? "밤" : "낮";
+    const when = hour >= DEADLINE_CUTOFF_HOUR ? "저녁" : "낮";
     if (text.length > LIMITS.maxChars) add("e", `${when}에 보내면 ${text.length}자입니다. ${LIMITS.maxChars}자 이하로 줄이세요.`);
     if (text.split("\n").length > LIMITS.maxLines) add("e", `${when}에 보내면 ${text.split("\n").length}줄입니다. ${LIMITS.maxLines}줄 이하로 줄이세요.`);
     if (/[{}]/.test(text)) add("e", "치환되지 않는 중괄호가 있습니다. 변수 이름을 확인하세요.");
   }
   // 지금 직원들의 이름은 짧지만, 이름이 긴 직원이 들어오면 같은 문구가 길어진다(앱이 경고하는 상한은 이름+직함 10자).
-  const worstCase = render(body, WORST, 21);
+  const worstCase = render(body, WORST, CHECK_HOURS[1]);
   if ((staff.name + staff.title).length < (WORST.name + WORST.title).length && worstCase.length > LIMITS.maxChars) {
     add("w", `이름이 긴 담당자(${WORST.name} ${WORST.title})가 들어오면 ${worstCase.length}자가 됩니다.`);
   }
-  const head = render(body, staff, 21).slice(0, LIMITS.visibleHead);
+  const head = render(body, staff, CHECK_HOURS[1]).slice(0, LIMITS.visibleHead);
   const wantsDeadline = body.includes("{약속시점}");
   if (wantsDeadline && !head.includes("내일 오전까지")) {
     add("w", `언제까지 보내 주겠다는 약속이 앞 ${LIMITS.visibleHead}자 밖에 있습니다. 문자가 접히면 안 보입니다.`);
@@ -561,6 +576,8 @@ function drawTemplatesBar() {
   $("btn-publish").disabled = errors > 0 || !state.templates.length || !state.canPublish;
   $("btn-publish").textContent = !state.canPublish ? "배포 토큰 없음" : errors > 0 ? `고칠 곳 ${errors}군데` : "직원 폰에 배포하기";
   $("btn-publish").title = !state.canPublish ? "서버에 배포용 GitHub 토큰(CBM_GITHUB_TOKEN)이 없습니다. 파일로 내려받아 내 맥에서 배포하세요." : "";
+  const shared = state.roster.shared.length;
+  $("photo-note").textContent = `담당자 명함과 회사 사진이 이 글과 함께 한 통으로 나갑니다(지금 회사 사진 ${shared}장${shared ? ", 명함 뒤에 순서대로" : " — 명함만 나갑니다"}). 명함에 있는 대표번호·주소·홈페이지는 글에 다시 쓰지 않습니다.`;
 }
 
 function drawTemplates() { drawList(); drawEditor(); drawPreview(); drawTemplatesBar(); drawTabs(); }
@@ -586,8 +603,11 @@ function drawOverview() {
   const v = state.version;
   const rel = state.release;
   const when = (iso) => { if (!iso) return ""; const d = new Date(iso); return isNaN(d) ? "" : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
-  const sharedEntry = r.shared[0];
-  const sharedImg = sharedEntry ? dataUrl(sharedEntry) : "";
+  const shared = r.shared;
+  const sharedThumbs = shared.map((x, i) => {
+    const u = dataUrl(x);
+    return u ? `<img alt="회사 사진 ${i + 1}" title="문자에서 ${nthPhoto(i + 1)} · ${kb(x.bytes)}" src="${u}">` : "";
+  }).join("");
   $("ov-cards").innerHTML = `
     <div class="card">
       <h3>앱</h3>
@@ -611,9 +631,10 @@ function drawOverview() {
     </div>
     <div class="card">
       <h3>회사 사진</h3>
-      ${sharedImg ? `<img alt="회사 공통 사진" src="${sharedImg}">` : '<div class="sub">회사 사진 없이 명함만 나갑니다.</div>'}
-      <div class="sub">${sharedEntry ? kb(sharedEntry.bytes) + " · 모든 문자에 두 번째 사진으로" : ""}</div>
-      <div class="row"><button class="small" data-go="shared">회사 사진 바꾸기</button></div>
+      <div class="big">${shared.length}장${state.rosterDirty ? '<span class="badge">고치는 중</span>' : ""}</div>
+      ${shared.length ? `<div class="thumbs">${sharedThumbs}</div>` : '<div class="sub">회사 사진 없이 명함만 나갑니다.</div>'}
+      <div class="sub">${shared.length ? `합계 ${kb(sharedBytes())} · 모든 문자에 명함 뒤 ${nthPhoto(1)}부터 순서대로` : ""}</div>
+      <div class="row"><button class="small" data-go="shared">회사 사진 고치기</button></div>
     </div>`;
   for (const b of $("ov-cards").querySelectorAll("[data-go]")) b.onclick = () => showTab(b.dataset.go);
   $("btn-copy-link").onclick = async () => {
@@ -653,13 +674,14 @@ function normalizeRoster(obj) {
   return { roster: { format: 2, revision: v2 ? (Number(r.revision) || 0) : 0, staff, shared }, format: r.format || 0 };
 }
 
+/** 명부·사진 검사. scope 는 어느 탭의 문제인지(staff·shared·all). 오류가 하나라도 있으면 두 탭의 저장 버튼이 모두 잠긴다. */
 function rosterIssues() {
   const issues = [];
-  const add = (level, text) => issues.push({ level, text });
+  const add = (level, text, scope) => issues.push({ level, text, scope: scope || "staff" });
   const r = state.roster;
-  if (!state.rosterSupported) { add("e", "이 자리에서는 명부·사진을 고칠 수 없습니다(로컬 서버가 옛 버전입니다)."); return issues; }
+  if (!state.rosterSupported) { add("e", "이 자리에서는 명부·사진을 고칠 수 없습니다(로컬 서버가 옛 버전입니다).", "all"); return issues; }
   if (state.rosterFormat && state.rosterFormat < 2) {
-    add("e", "배포처에 사진 목록이 아직 없습니다(옛 형식). 먼저 내 맥에서 scripts/publish-images.sh 를 한 번 실행해 지금 앱의 사진을 올린 뒤 여기서 고치세요.");
+    add("e", "배포처에 사진 목록이 아직 없습니다(옛 형식). 먼저 내 맥에서 scripts/publish-images.sh 를 한 번 실행해 지금 앱의 사진을 올린 뒤 여기서 고치세요.", "all");
   }
   if (r.staff.length > PHOTO.maxStaff) add("e", `직원은 ${PHOTO.maxStaff}명까지입니다.`);
   const seen = new Set();
@@ -675,25 +697,39 @@ function rosterIssues() {
     if (s.card) {
       if (!FILE_RE.test(s.card.file)) add("e", `${who}: 명함 파일 이름이 규칙에 맞지 않습니다.`);
       if (s.card.bytes > PHOTO.maxBytes) add("e", `${who}: 명함이 ${kb(s.card.bytes)} 입니다. 1MB 를 넘으면 폰이 받지 않습니다.`);
-      else if (s.card.bytes > PHOTO.warnBytes) add("w", `${who}: 명함이 ${kb(s.card.bytes)} 입니다. 문자 한 통에 사진 2장이 들어가므로 400KB 아래를 권합니다.`);
+      else if (s.card.bytes > PHOTO.warnBytes) add("w", `${who}: 명함이 ${kb(s.card.bytes)} 입니다. 명함 뒤에 회사 사진이 함께 들어가므로 400KB 아래를 권합니다.`);
       if (!state.staged[s.card.file] && !state.files[s.card.file]) add("e", `${who}: 명함 사진 파일이 배포처에 없습니다. 다시 올리세요.`);
     } else {
       add("w", `${who}: 명함이 없어 회사 사진만 붙습니다.`);
     }
   });
-  r.shared.forEach((x) => {
-    if (!FILE_RE.test(x.file)) add("e", "회사 사진 파일 이름이 규칙에 맞지 않습니다.");
-    if (x.bytes > PHOTO.maxBytes) add("e", `회사 사진이 ${kb(x.bytes)} 입니다. 1MB 를 넘으면 폰이 받지 않습니다.`);
-    else if (x.bytes > PHOTO.warnBytes) add("w", `회사 사진이 ${kb(x.bytes)} 입니다. 400KB 아래를 권합니다.`);
-    if (!state.staged[x.file] && !state.files[x.file]) add("e", "회사 사진 파일이 배포처에 없습니다. 다시 올리세요.");
+  // 회사 사진: 앱은 목록을 명함 뒤에 순서대로 모두 붙인다. 장수·합계 크기는 한 통(약 900KB) 기준으로 본다.
+  if (r.shared.length > SHARED.maxCount) add("e", `회사 사진은 ${SHARED.maxCount}장까지입니다. 명함까지 한 통에 ${SHARED.maxCount + 1}장이 넘으면 받는 폰에서 스크롤이 길어지고 용량 한도에 걸립니다.`, "shared");
+  r.shared.forEach((x, i) => {
+    const who = `회사 사진 ${i + 1}(문자 ${nthPhoto(i + 1)})`;
+    if (!FILE_RE.test(x.file)) add("e", `${who}: 파일 이름이 규칙에 맞지 않습니다.`, "shared");
+    if (x.bytes > PHOTO.maxBytes) add("e", `${who}: ${kb(x.bytes)} 입니다. 1MB 를 넘으면 폰이 받지 않습니다.`, "shared");
+    else if (x.bytes > PHOTO.warnBytes) add("w", `${who}: ${kb(x.bytes)} 입니다. 400KB 아래를 권합니다.`, "shared");
+    if (!state.staged[x.file] && !state.files[x.file]) add("e", `${who}: 사진 파일이 배포처에 없습니다. 다시 올리세요.`, "shared");
   });
-  if (!r.shared.length) add("w", "회사 사진이 없습니다. 모든 문자가 명함만 달고 나갑니다.");
+  const total = sharedBytes();
+  if (total > SHARED.maxBytes) add("e", `회사 사진 합계가 ${kb(total)} 입니다. 명함까지 더하면 통신사 한 통 한도(약 ${kb(SHARED.mmsLimit)})를 넘어 화질이 떨어지거나 뒤쪽 사진이 빠집니다. ${kb(SHARED.maxBytes)} 아래로 줄이거나 한 장을 빼세요.`, "shared");
+  else if (total > SHARED.warnBytes) add("w", `회사 사진 합계가 ${kb(total)} 입니다. 명함까지 더하면 통신사 한 통 한도 약 ${kb(SHARED.mmsLimit)} 에 가깝습니다.`, "shared");
+  if (!r.shared.length) add("w", "회사 사진이 없습니다. 모든 문자가 명함만 달고 나갑니다.", "shared");
   return issues;
 }
 
 function drawRosterIssues() {
   const issues = rosterIssues();
-  $("roster-issues").innerHTML = issues.map((x) => `<li class="${x.level}">${esc(x.text)}</li>`).join("");
+  // 각 탭에는 그 탭의 문제만 보이되, 다른 탭의 오류 때문에 버튼이 잠겼으면 그 사실을 한 줄로 알린다.
+  const paint = (id, scope, otherTab) => {
+    const mine = issues.filter((x) => x.scope === scope || x.scope === "all");
+    const others = issues.filter((x) => x.level === "e" && x.scope !== scope && x.scope !== "all").length;
+    $(id).innerHTML = mine.map((x) => `<li class="${x.level}">${esc(x.text)}</li>`).join("") +
+      (others ? `<li class="e">「${otherTab}」 탭에 고칠 곳 ${others}군데가 더 있습니다.</li>` : "");
+  };
+  paint("roster-issues", "staff", "회사 사진");
+  paint("shared-issues", "shared", "직원·명함");
   const errors = issues.filter((x) => x.level === "e").length;
   for (const id of ["btn-roster-save", "btn-roster-save-2"]) {
     $(id).disabled = errors > 0 || !state.rosterDirty;
@@ -701,7 +737,7 @@ function drawRosterIssues() {
   }
   const staged = Object.keys(state.staged).length;
   $("rosterline").textContent = `직원 ${state.roster.staff.length}명 · 명부 개정 ${state.roster.revision}${state.rosterDirty ? " · 고친 내용 있음" : ""}${staged ? ` · 새 사진 ${staged}장` : ""}`;
-  $("sharedline").textContent = `명부 개정 ${state.roster.revision}${state.rosterDirty ? " · 고친 내용 있음" : ""}`;
+  $("sharedline").textContent = `회사 사진 ${state.roster.shared.length}장 · 명부 개정 ${state.roster.revision}${state.rosterDirty ? " · 고친 내용 있음" : ""}`;
   drawTabs();
 }
 
@@ -746,13 +782,45 @@ function drawRoster() {
   drawRosterIssues();
 }
 
+/** 회사 사진 탭. 목록 순서가 곧 문자 안 순서(명함 다음부터). */
 function drawShared() {
-  const x = state.roster.shared[0];
-  const img = dataUrl(x);
-  $("shared-view").innerHTML = x
-    ? `${img ? `<img alt="회사 공통 사진" src="${img}">` : '<div class="empty">사진 파일을 불러오지 못했습니다.</div>'}<div class="hint" style="margin-top:6px">${kb(x.bytes)}${state.staged[x.file] ? " · 아직 올리지 않음" : ""}</div>`
-    : '<div class="empty">회사 사진이 없습니다. 모든 문자가 명함만 달고 나갑니다.</div>';
-  $("btn-shared-del").hidden = !x;
+  const ul = $("shared-list");
+  const list = state.roster.shared;
+  ul.innerHTML = "";
+  list.forEach((x, i) => {
+    const img = dataUrl(x);
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <div class="thumb">${img ? `<img alt="회사 사진 ${i + 1}" src="${img}">` : "사진 파일 없음"}</div>
+      <div class="fields"><span class="n">${i + 1}</span>
+        <div><b>문자에서 ${nthPhoto(i + 1)}</b><div class="hint">${kb(x.bytes)}${state.staged[x.file] ? " · 아직 올리지 않음" : ""}</div></div></div>
+      <div class="ractions"><button class="small danger" data-shared-remove="${i}">지우기</button></div>
+      <div class="mv"><button class="small" data-shared-up="${i}">▲</button><button class="small" data-shared-down="${i}">▼</button></div>`;
+    ul.appendChild(li);
+  });
+  if (!list.length) ul.innerHTML = '<div class="empty">회사 사진이 없습니다. 모든 문자가 명함만 달고 나갑니다. "사진 추가" 를 누르세요.</div>';
+  ul.querySelectorAll("[data-shared-remove]").forEach((el) => {
+    el.onclick = () => {
+      const i = +el.dataset.sharedRemove;
+      if (!confirm(`회사 사진 ${i + 1}(문자 ${nthPhoto(i + 1)})을 목록에서 뺍니다. 반영하면 모든 폰에 적용됩니다.`)) return;
+      list.splice(i, 1); touchRoster();
+    };
+  });
+  ul.querySelectorAll("[data-shared-up]").forEach((el) => { el.onclick = () => moveShared(+el.dataset.sharedUp, -1); });
+  ul.querySelectorAll("[data-shared-down]").forEach((el) => { el.onclick = () => moveShared(+el.dataset.sharedDown, 1); });
+  const biggestCard = state.roster.staff.reduce((n, s) => Math.max(n, s.card ? s.card.bytes || 0 : 0), 0);
+  $("shared-sum").textContent = list.length
+    ? `회사 사진 ${list.length}장 · 합계 ${kb(sharedBytes())}${biggestCard ? ` · 가장 큰 명함까지 더하면 약 ${kb(sharedBytes() + biggestCard)}` : ""} (한 통 한도 약 ${kb(SHARED.mmsLimit)})`
+    : "";
+  $("shared-file").parentElement.hidden = !state.rosterSupported;
+}
+
+function moveShared(i, d) {
+  const j = i + d, list = state.roster.shared;
+  if (j < 0 || j >= list.length) return;
+  const [x] = list.splice(i, 1);
+  list.splice(j, 0, x);
+  touchRoster();
 }
 
 function moveStaff(i, d) {
@@ -762,7 +830,12 @@ function moveStaff(i, d) {
   list.splice(j, 0, x);
   touchRoster();
 }
-function touchRoster() { state.rosterDirty = true; syncStaffFromRoster(); drawRoster(); drawShared(); drawOverview(); drawTemplates(); }
+/** 명부가 가리키지 않는 '아직 안 올린' 사진은 버린다 — 지운 사진이 "새 사진 N장" 에 남지 않게. */
+function pruneStaged() {
+  const referenced = new Set([...state.roster.staff.filter((s) => s.card).map((s) => s.card.file), ...state.roster.shared.map((x) => x.file)]);
+  for (const name of Object.keys(state.staged)) if (!referenced.has(name)) delete state.staged[name];
+}
+function touchRoster() { state.rosterDirty = true; pruneStaged(); syncStaffFromRoster(); drawRoster(); drawShared(); drawOverview(); drawTemplates(); }
 function touchRosterLight() { state.rosterDirty = true; syncStaffFromRoster(); drawRosterIssues(); }
 /** 문구 편집기의 "받는 직원" 목록은 명부를 따른다. */
 function syncStaffFromRoster() {
@@ -798,7 +871,8 @@ function pickPhoto(file, kind, assign) {
   shrinkPhoto(file).then((p) => {
     const name = `${kind}-${p.sha256.slice(0, 12)}.b64`;
     if (!state.files[name]) state.staged[name] = p.b64;
-    assign({ file: name, type: p.type, bytes: p.bytes, sha256: p.sha256 });
+    // assign 이 false 를 돌려주면(같은 사진을 또 넣은 경우) 받는 쪽이 이미 상태줄에 이유를 적었으므로 덮지 않는다.
+    if (assign({ file: name, type: p.type, bytes: p.bytes, sha256: p.sha256 }) === false) { pruneStaged(); return; }
     setStatus(`사진 준비됨 · ${p.width}×${p.height} · ${kb(p.bytes)}`, p.bytes > PHOTO.warnBytes ? "warn" : "ok");
   }).catch((e) => { setStatus("사진을 넣지 못했습니다", "bad"); showDialog("사진을 넣지 못했습니다", `<p>${esc(e.message)}</p>`); });
 }
@@ -863,10 +937,14 @@ $("btn-staff-add").onclick = () => {
 };
 $("btn-roster-save").onclick = saveRoster;
 $("btn-roster-save-2").onclick = saveRoster;
-$("shared-file").onchange = (e) => { pickPhoto(e.target.files[0], "shared", (photo) => { state.roster.shared = [photo]; touchRoster(); }); e.target.value = ""; };
-$("btn-shared-del").onclick = () => {
-  if (!confirm("회사 사진 없이 명함만 보내도록 바꿉니다. 반영하면 모든 폰에 적용됩니다.")) return;
-  state.roster.shared = []; touchRoster();
+$("shared-file").onchange = (e) => {
+  pickPhoto(e.target.files[0], "shared", (photo) => {
+    // 같은 내용이면 파일 이름(해시)이 같다 — 두 번 붙일 이유가 없다.
+    if (state.roster.shared.some((x) => x.file === photo.file)) { setStatus("이미 목록에 있는 사진입니다", "warn"); return false; }
+    state.roster.shared.push(photo); touchRoster();
+    return true;
+  });
+  e.target.value = "";
 };
 
 // ---- 배포처와 주고받기 ----
