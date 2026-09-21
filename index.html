@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'self' https://api.github.com https://gist.githubusercontent.com; base-uri 'none'; form-action 'none'">
+<title>안내 문자 문구 관리</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --panel: #ffffff; --line: #e2e5ea; --text: #1a1d21; --muted: #6b7280;
+    --brand: #f26522; --brand-dark: #d4521a; --ok: #12805c; --warn: #b45309; --bad: #c22b2b;
+    --chip: #eef1f5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    font-size: 14px; line-height: 1.55;
+  }
+  header {
+    position: sticky; top: 0; z-index: 10; background: var(--panel); border-bottom: 1px solid var(--line);
+    padding: 10px 18px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  header h1 { font-size: 16px; margin: 0; font-weight: 700; }
+  header .rev { color: var(--muted); font-size: 13px; }
+  header .spacer { flex: 1; }
+  button {
+    font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--text);
+    border-radius: 8px; padding: 7px 13px; cursor: pointer;
+  }
+  button:hover { background: #f0f2f5; }
+  button.primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 700; }
+  button.primary:hover { background: var(--brand-dark); }
+  button.primary:disabled { background: #d9dde3; border-color: #d9dde3; color: #8b9199; cursor: not-allowed; }
+  button.small { padding: 3px 9px; font-size: 13px; border-radius: 6px; }
+  button.danger { color: var(--bad); }
+  main { display: grid; grid-template-columns: 300px minmax(0, 1fr) 340px; gap: 14px; padding: 14px 18px 40px; align-items: start; }
+  @media (max-width: 1180px) { main { grid-template-columns: 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  .panel > h2 { font-size: 13px; margin: 0 0 10px; color: var(--muted); font-weight: 700; letter-spacing: .02em; }
+  ul.list { list-style: none; margin: 0; padding: 0; }
+  ul.list li {
+    border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; margin-bottom: 7px; cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+  }
+  ul.list li.sel { border-color: var(--brand); background: #fff5ef; }
+  ul.list li .t { flex: 1; min-width: 0; }
+  ul.list li .t b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  ul.list li .t span { color: var(--muted); font-size: 12px; }
+  ul.list li .mv { display: flex; flex-direction: column; gap: 2px; }
+  ul.list li .mv button { padding: 0 5px; font-size: 11px; line-height: 15px; border-radius: 4px; }
+  label.f { display: block; margin-bottom: 12px; }
+  label.f > span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+  input[type=text], textarea {
+    font: inherit; width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #fff; color: var(--text);
+  }
+  textarea { min-height: 320px; resize: vertical; line-height: 1.7; }
+  input:focus, textarea:focus { outline: 2px solid var(--brand); outline-offset: -1px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    border: 1px solid var(--line); background: var(--chip); border-radius: 999px; padding: 4px 11px; cursor: pointer; user-select: none; font-size: 13px;
+  }
+  .chip.on { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+  .vars { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .vars button { font-size: 12px; padding: 3px 9px; border-radius: 6px; color: var(--brand); border-color: #f6cdb4; background: #fff6f1; }
+  .counts { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; margin-top: 8px; }
+  .counts b { font-variant-numeric: tabular-nums; }
+  .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); }
+  .issues { margin: 10px 0 0; padding: 0; list-style: none; }
+  .issues li { font-size: 13px; padding: 5px 9px; border-radius: 7px; margin-bottom: 5px; }
+  .issues li.e { background: #fdeaea; color: #8f1d1d; }
+  .issues li.w { background: #fdf3e2; color: #7c4a06; }
+  .phone {
+    background: #dfe4ea; border-radius: 16px; padding: 12px; margin-top: 4px;
+  }
+  .bubble {
+    background: #fff; border-radius: 4px 14px 14px 14px; padding: 11px 13px; white-space: pre-wrap; word-break: break-all;
+    font-size: 13.5px; line-height: 1.65; box-shadow: 0 1px 2px rgba(0,0,0,.08);
+  }
+  .bubble .tail { color: #9aa2ad; }
+  .fold { border-top: 1px dashed #c3c9d2; margin: 7px 0 5px; font-size: 11px; color: #8e959f; text-align: center; }
+  .note { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+  .status { font-size: 13px; padding: 6px 11px; border-radius: 8px; }
+  .status.ok { background: #e6f5ef; } .status.bad { background: #fdeaea; } .status.busy { background: #eef1f5; color: var(--muted); }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  dialog { border: 1px solid var(--line); border-radius: 14px; padding: 18px; max-width: 560px; width: calc(100% - 36px); }
+  dialog::backdrop { background: rgba(20,22,26,.42); }
+  dialog h3 { margin: 0 0 10px; font-size: 15px; }
+  pre.json { background: #f5f6f8; border-radius: 8px; padding: 10px; font-size: 12px; max-height: 320px; overflow: auto; }
+  .empty { color: var(--muted); font-size: 13px; padding: 12px 2px; }
+  .staffbox { max-height: 190px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+  .hint { font-size: 12px; color: var(--muted); }
+  #gate { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 50; }
+  .gate-card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px; max-width: 460px; width: 100%; }
+  .gate-card h2 { margin: 0 0 6px; font-size: 17px; }
+  .gate-lead { margin: 0 0 16px; color: var(--muted); font-size: 13.5px; }
+  .gate-remember { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); margin-top: -4px; }
+  .gate-help { margin: 14px 0 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
+</style>
+</head>
+<body>
+<header>
+  <h1>안내 문자 문구 관리</h1>
+  <span class="rev" id="revline">불러오는 중…</span>
+  <span class="spacer"></span>
+  <span class="status busy" id="status">시작</span>
+  <button id="btn-token" hidden>열쇠 바꾸기</button>
+  <button id="btn-reload">다시 불러오기</button>
+  <button id="btn-download">파일로 내려받기</button>
+  <button class="primary" id="btn-publish">직원 폰에 배포하기</button>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>문구 목록 <span class="hint">(위에 있는 것이 팝업에서 먼저 보입니다)</span></h2>
+    <ul class="list" id="list"></ul>
+    <div class="row">
+      <button class="small" id="btn-add">+ 새 문구</button>
+      <button class="small" id="btn-dup">복제</button>
+      <button class="small danger" id="btn-del">삭제</button>
+    </div>
+  </section>
+
+  <section class="panel" id="editor">
+    <h2>문구 편집</h2>
+    <div id="editor-body"></div>
+  </section>
+
+  <section class="panel">
+    <h2>고객 폰에서 이렇게 보입니다</h2>
+    <div class="row" style="margin-bottom:8px">
+      <select id="prev-staff" style="font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line)"></select>
+      <select id="prev-time" style="font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line)">
+        <option value="10">낮에 보낼 때</option>
+        <option value="21">밤 8시 이후</option>
+      </select>
+    </div>
+    <div class="phone">
+      <div class="bubble" id="preview"></div>
+    </div>
+    <div class="counts" id="counts"></div>
+    <ul class="issues" id="issues"></ul>
+    <p class="note">사진 2장(회사 소개·담당자 명함)이 이 글과 함께 한 통으로 나갑니다. 명함에 있는 대표번호·주소·홈페이지는 글에 다시 쓰지 않습니다.</p>
+    <p class="note"><b>어떤 전화에 쓸지</b>를 고른 문구는 그 통화 뒤 팝업에 <b>먼저 뜹니다</b>. 고르지 않은 문구도 팝업 목록에 모두 나오며 직원이 상황에 맞게 고릅니다.</p>
+  </section>
+</main>
+
+<div id="gate" hidden>
+  <div class="gate-card">
+    <h2>안내 문자 문구 관리</h2>
+    <p class="gate-lead">이 화면을 쓰려면 <b>GitHub 열쇠(토큰)</b>가 필요합니다. 회사 배포처를 고칠 수 있는 열쇠입니다.</p>
+    <label class="f"><span>열쇠 (ghp_ 로 시작합니다)</span>
+      <input type="password" id="gate-token" autocomplete="off" spellcheck="false" placeholder="ghp_…"></label>
+    <label class="gate-remember"><input type="checkbox" id="gate-remember" checked> 이 기기에 기억하기 (내 컴퓨터·내 폰에서만 체크하세요)</label>
+    <div class="row" style="margin-top:12px">
+      <button class="primary" id="gate-enter">들어가기</button>
+      <span class="status busy" id="gate-status" hidden></span>
+    </div>
+    <p class="gate-help">열쇠 만드는 곳: GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token. 권한은 <b>gist</b> 하나만 고릅니다. 자세한 절차는 회사 문서 <i>설치안내</i> 1절.</p>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <h3 id="dlg-title"></h3>
+  <div id="dlg-body"></div>
+  <div class="row" style="justify-content:flex-end;margin-top:14px">
+    <button id="dlg-close">닫기</button>
+  </div>
+</dialog>
+
+<script>
+"use strict";
+
+// ---- 앱과 같은 규칙 (domain/catalog/TemplateCatalogCodec.kt, BuiltInCatalogTest.kt) ----
+const LIMITS = {
+  maxChars: 320,        // 치환 후 본문 길이
+  maxLines: 12,
+  visibleHead: 193,     // 삼성 메시지가 접어도 보이는 것이 확인된 앞부분
+  maxBody: 1000,        // 저장 가능한 원본 길이
+  maxName: 40,
+  maxKey: 40,
+  maxTemplates: 50,
+};
+const RULES = [["incoming", "걸려온 전화"], ["outgoing", "내가 건 전화"], ["missed", "부재중"]];
+const VARS = [["{담당자명}", "담당자 이름"], ["{담당자직함}", "직함"], ["{약속시점}", "오늘 안에 / 내일 오전까지"], ["{회사명}", "회사 이름"], ["{담당자연락처}", "담당자 번호"]];
+const BANNED = ["http", "www.", "%"];
+const PHOTO_ONLY = ["1688-0239", "irumbiz.com", "청라커낼로", "사업자등록번호", "브랜드평판", "국가품질만족지수", "소비자만족", "ISO", "이노비즈", "메인비즈"];
+const MONEY = /\d[\d,.]*\s*(억|천만|백만|만|천)?\s*원/;
+const KEY_RE = /^[a-z0-9][a-z0-9_-]*$/;
+const WORST = { name: "남궁민수", title: "수석컨설턴트" };  // 이름+직함 10자, 앱의 경고 상한
+
+let state = { name: "", revision: 0, templates: [], staff: [], sel: 0, dirty: false, source: "", canPublish: true };
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+function render(body, staff, hour) {
+  const deadline = hour >= 20 ? "내일 오전까지" : "오늘 안에";
+  return body
+    .split("{담당자명}").join(staff.name)
+    .split("{담당자직함}").join(staff.title)
+    .split("{약속시점}").join(deadline)
+    .split("{회사명}").join("이룸경영지원센터")
+    .split("{담당자연락처}").join(staff.phone || "010-0000-0000")
+    .replace(/[ \t]{2,}/g, " ").replace(/ +\n/g, "\n");
+}
+
+/** 이 문구를 받을 직원 중 이름+직함이 가장 긴 사람. 지정이 없으면 최악 조합으로 본다. */
+function worstStaffFor(t) {
+  const picked = (t.staff && t.staff.length)
+    ? state.staff.filter((s) => t.staff.includes(s.name))
+    : state.staff;
+  const pool = picked.length ? picked : [WORST];
+  let worst = pool[0];
+  for (const s of pool) {
+    if ((s.name + s.title).length > (worst.name + worst.title).length) worst = s;
+  }
+  // 앱이 허용하는 최악(10자)보다 짧으면 실제 사람 기준으로만 검사한다.
+  return worst;
+}
+
+/** 두 문구가 같은 폰에 함께 들어갈 수 있는지(둘 다 전원이거나, 받는 직원이 겹치면 함께 들어간다). */
+function sharesStaff(a, b) {
+  const x = a.staff || [], y = b.staff || [];
+  if (!x.length || !y.length) return true;
+  return x.some((n) => y.includes(n));
+}
+
+function checkTemplate(t, index) {
+  const issues = [];
+  const add = (level, text) => issues.push({ level, text });
+  const name = (t.name || "").trim();
+  if (!name) add("e", "문구 이름이 비었습니다.");
+  if (name.length > LIMITS.maxName) add("e", `문구 이름이 ${LIMITS.maxName}자를 넘습니다.`);
+  if (!KEY_RE.test(t.key || "") || (t.key || "").length > LIMITS.maxKey) add("e", "문구 키는 영문 소문자·숫자·_·- 만 쓸 수 있습니다.");
+  for (let i = 0; i < state.templates.length; i++) {
+    if (i === index) continue;
+    if (state.templates[i].key === t.key) add("e", `키가 다른 문구와 겹칩니다: ${t.key}`);
+    if ((state.templates[i].name || "").trim().toLowerCase() === name.toLowerCase() && name) add("e", `이름이 다른 문구와 겹칩니다: ${name}`);
+  }
+  const body = (t.body || "").trim();
+  if (!body) add("e", "내용이 비었습니다.");
+  if (body.length > LIMITS.maxBody) add("e", `내용이 ${LIMITS.maxBody}자를 넘습니다.`);
+
+  const staff = worstStaffFor(t);
+  for (const hour of [10, 21]) {
+    const text = render(body, staff, hour);
+    const when = hour >= 20 ? "밤" : "낮";
+    if (text.length > LIMITS.maxChars) add("e", `${when}에 보내면 ${text.length}자입니다. ${LIMITS.maxChars}자 이하로 줄이세요.`);
+    if (text.split("\n").length > LIMITS.maxLines) add("e", `${when}에 보내면 ${text.split("\n").length}줄입니다. ${LIMITS.maxLines}줄 이하로 줄이세요.`);
+    if (/[{}]/.test(text)) add("e", "치환되지 않는 중괄호가 있습니다. 변수 이름을 확인하세요.");
+  }
+  // 지금 직원들의 이름은 짧지만, 이름이 긴 직원이 들어오면 같은 문구가 길어진다(앱이 경고하는 상한은 이름+직함 10자).
+  const worstCase = render(body, WORST, 21);
+  if ((staff.name + staff.title).length < (WORST.name + WORST.title).length && worstCase.length > LIMITS.maxChars) {
+    add("w", `이름이 긴 담당자(${WORST.name} ${WORST.title})가 들어오면 ${worstCase.length}자가 됩니다.`);
+  }
+  const head = render(body, staff, 21).slice(0, LIMITS.visibleHead);
+  const wantsDeadline = body.includes("{약속시점}");
+  if (wantsDeadline && !head.includes("내일 오전까지")) {
+    add("w", `언제까지 보내 주겠다는 약속이 앞 ${LIMITS.visibleHead}자 밖에 있습니다. 문자가 접히면 안 보입니다.`);
+  }
+  if (!wantsDeadline && !head.includes("문자로") && !head.includes("문자 한")) {
+    add("w", `무엇을 답하면 되는지가 앞 ${LIMITS.visibleHead}자 안에 없습니다.`);
+  }
+  for (const b of BANNED) if (body.includes(b)) add("e", `"${b}" 는 넣지 않습니다. 정책자금 사칭 문자와 구분이 어려워집니다.`);
+  if (MONEY.test(body)) add("e", "금액 숫자는 넣지 않습니다(광고로 분류될 수 있습니다).");
+  for (const w of PHOTO_ONLY) if (body.includes(w)) add("w", `"${w}" 는 사진에 이미 있습니다. 글에서 빼세요.`);
+  if (!body.endsWith("{담당자명} {담당자직함}")) add("w", "마지막 줄을 담당자 서명으로 끝내는 것을 권합니다.");
+  if (!(t.rules || []).length) {
+    add("w", "어떤 전화에 쓸지 고르지 않았습니다. 통화 직후 팝업에서 직원이 손으로 골라 씁니다(상황별 문구는 이것이 정상입니다).");
+  }
+  // 한 통화 유형을 여러 문구가 맡으면 자동으로 골라지는 것이 만든 차례에 따라 정해져 직원이 예측할 수 없다.
+  for (const rule of t.rules || []) {
+    const rivals = state.templates.filter((o, i) => i !== index && (o.rules || []).includes(rule) && sharesStaff(o, t));
+    if (rivals.length) {
+      const label = (RULES.find((x) => x[0] === rule) || [, rule])[1];
+      add("e", `"${label}" 을 ${rivals.map((r) => r.name).join(", ")} 도 맡고 있습니다. 자동으로 먼저 뜰 문구는 하나만 정하세요.`);
+    }
+  }
+  if ((t.staff || []).length && !state.staff.some((s) => t.staff.includes(s.name))) {
+    add("e", "받는 직원으로 고른 사람이 직원 명부에 없습니다.");
+  }
+  return issues;
+}
+
+function allIssues() {
+  return state.templates.flatMap((t, i) => checkTemplate(t, i).map((x) => ({ ...x, key: t.key, name: t.name })));
+}
+
+// ---- 그리기 ----
+function drawList() {
+  const ul = $("list");
+  ul.innerHTML = "";
+  state.templates.forEach((t, i) => {
+    const errs = checkTemplate(t, i).filter((x) => x.level === "e").length;
+    const li = document.createElement("li");
+    if (i === state.sel) li.className = "sel";
+    const who = (t.staff && t.staff.length) ? `${t.staff.join(", ")} 전용` : "모든 직원";
+    const kinds = (t.rules || []).map((r) => (RULES.find((x) => x[0] === r) || [, r])[1]).join(" · ") || "직접 고를 때만";
+    li.innerHTML = `<div class="t"><b>${esc(t.name || "(이름 없음)")}${errs ? ' <span class="bad">●</span>' : ""}</b><span>${esc(kinds)} / ${esc(who)}</span></div>
+      <div class="mv"><button class="small" data-up="${i}">▲</button><button class="small" data-down="${i}">▼</button></div>`;
+    li.addEventListener("click", (e) => {
+      if (e.target.dataset.up !== undefined) { move(i, -1); e.stopPropagation(); return; }
+      if (e.target.dataset.down !== undefined) { move(i, 1); e.stopPropagation(); return; }
+      state.sel = i; drawAll();
+    });
+    ul.appendChild(li);
+  });
+  if (!state.templates.length) ul.innerHTML = '<div class="empty">문구가 없습니다. "새 문구" 를 누르세요.</div>';
+}
+
+function drawEditor() {
+  const t = state.templates[state.sel];
+  const box = $("editor-body");
+  if (!t) { box.innerHTML = '<div class="empty">왼쪽에서 문구를 고르세요.</div>'; return; }
+  box.innerHTML = `
+    <label class="f"><span>문구 이름 (직원 폰의 팝업에 보입니다)</span>
+      <input type="text" id="f-name" maxlength="${LIMITS.maxName}" value="${esc(t.name || "")}"></label>
+    <label class="f"><span>어떤 전화에 쓸지</span><div class="chips" id="f-rules"></div></label>
+    <label class="f"><span>받는 직원 (아무도 안 고르면 모든 직원에게 갑니다)</span>
+      <div class="staffbox"><div class="chips" id="f-staff"></div></div></label>
+    <label class="f"><span>내용</span>
+      <textarea id="f-body" spellcheck="false">${esc(t.body || "")}</textarea>
+      <div class="vars" id="f-vars"></div>
+    </label>
+    <label class="f"><span>문구 키 (폰이 같은 문구를 알아보는 이름. 한 번 정하면 바꾸지 마세요)</span>
+      <input type="text" id="f-key" maxlength="${LIMITS.maxKey}" value="${esc(t.key || "")}"></label>`;
+
+  const rulesBox = $("f-rules");
+  RULES.forEach(([id, label]) => {
+    const on = (t.rules || []).includes(id);
+    const el = document.createElement("span");
+    el.className = "chip" + (on ? " on" : "");
+    el.textContent = label;
+    el.onclick = () => {
+      t.rules = on ? (t.rules || []).filter((r) => r !== id) : [...(t.rules || []), id];
+      touch();
+    };
+    rulesBox.appendChild(el);
+  });
+
+  const staffBox = $("f-staff");
+  if (!state.staff.length) {
+    staffBox.innerHTML = '<span class="hint">직원 명부를 불러오지 못했습니다.</span>';
+  } else {
+    const allOn = !(t.staff || []).length;
+    const every = document.createElement("span");
+    every.className = "chip" + (allOn ? " on" : "");
+    every.textContent = "모든 직원";
+    every.onclick = () => { t.staff = []; touch(); };
+    staffBox.appendChild(every);
+    state.staff.forEach((s) => {
+      const on = (t.staff || []).includes(s.name);
+      const el = document.createElement("span");
+      el.className = "chip" + (on ? " on" : "");
+      el.textContent = s.title ? `${s.name} ${s.title}` : s.name;
+      el.onclick = () => {
+        const cur = t.staff || [];
+        t.staff = on ? cur.filter((n) => n !== s.name) : [...cur, s.name];
+        touch();
+      };
+      staffBox.appendChild(el);
+    });
+  }
+
+  const varsBox = $("f-vars");
+  VARS.forEach(([v, label]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = v; b.title = label;
+    b.onclick = () => {
+      const ta = $("f-body");
+      const at = ta.selectionStart;
+      t.body = ta.value.slice(0, at) + v + ta.value.slice(ta.selectionEnd);
+      touch();
+      requestAnimationFrame(() => { const n = $("f-body"); n.focus(); n.selectionStart = n.selectionEnd = at + v.length; });
+    };
+    varsBox.appendChild(b);
+  });
+
+  $("f-name").oninput = (e) => { t.name = e.target.value; touchLight(); };
+  $("f-key").oninput = (e) => { t.key = e.target.value.trim(); touchLight(); };
+  $("f-body").oninput = (e) => { t.body = e.target.value; touchLight(); };
+}
+
+function drawPreview() {
+  const t = state.templates[state.sel];
+  const sel = $("prev-staff");
+  if (sel.options.length !== state.staff.length + 1) {
+    sel.innerHTML = '<option value="">이름이 가장 긴 담당자</option>' +
+      state.staff.map((s) => `<option value="${esc(s.name)}">${esc(s.title ? s.name + " " + s.title : s.name)}</option>`).join("");
+  }
+  if (!t) { $("preview").textContent = ""; $("counts").innerHTML = ""; $("issues").innerHTML = ""; return; }
+  const chosen = state.staff.find((s) => s.name === sel.value);
+  const staff = chosen || worstStaffFor(t);
+  const hour = Number($("prev-time").value);
+  const text = render((t.body || "").trim(), staff, hour);
+  const head = text.slice(0, LIMITS.visibleHead), tail = text.slice(LIMITS.visibleHead);
+  $("preview").innerHTML = esc(head) + (tail
+    ? `<div class="fold">여기부터는 「모두 보기」를 눌러야 보일 수 있습니다</div><span class="tail">${esc(tail)}</span>`
+    : "");
+
+  const lines = text.split("\n").length;
+  const cls = (v, max) => (v > max ? "bad" : v > max * 0.92 ? "warn" : "ok");
+  $("counts").innerHTML =
+    `<span>길이 <b class="${cls(text.length, LIMITS.maxChars)}">${text.length}</b> / ${LIMITS.maxChars}자</span>` +
+    `<span>줄 <b class="${cls(lines, LIMITS.maxLines)}">${lines}</b> / ${LIMITS.maxLines}줄</span>` +
+    `<span class="hint">${esc(staff.name + " " + staff.title)} 기준</span>`;
+
+  const issues = checkTemplate(t, state.sel);
+  $("issues").innerHTML = issues.map((x) => `<li class="${x.level}">${esc(x.text)}</li>`).join("");
+}
+
+function drawHeader() {
+  $("revline").textContent = `${state.name || "이름 없는 묶음"} · 개정 ${state.revision}${state.dirty ? " · 고친 내용 있음" : ""}` +
+    (state.source ? ` · ${state.source}` : "");
+  const errors = allIssues().filter((x) => x.level === "e").length;
+  $("btn-publish").disabled = errors > 0 || !state.templates.length || !state.canPublish;
+  $("btn-publish").textContent = !state.canPublish ? "배포 토큰 없음" : errors > 0 ? `고칠 곳 ${errors}군데` : "직원 폰에 배포하기";
+  $("btn-publish").title = !state.canPublish ? "서버에 배포용 GitHub 토큰(CBM_GITHUB_TOKEN)이 없습니다. 파일로 내려받아 내 맥에서 배포하세요." : "";
+}
+
+function drawAll() { drawList(); drawEditor(); drawPreview(); drawHeader(); }
+function touch() { state.dirty = true; drawAll(); }
+function touchLight() { state.dirty = true; drawList(); drawPreview(); drawHeader(); }
+
+function move(i, d) {
+  const j = i + d;
+  if (j < 0 || j >= state.templates.length) return;
+  const [x] = state.templates.splice(i, 1);
+  state.templates.splice(j, 0, x);
+  if (state.sel === i) state.sel = j; else if (state.sel === j) state.sel = i;
+  touch();
+}
+
+function setStatus(text, kind) { const el = $("status"); el.textContent = text; el.className = "status " + (kind || "busy"); }
+
+// ---- 배포처와 주고받기 ----
+//
+// 이 화면은 두 가지 자리에서 똑같이 돈다.
+//   1) 내 맥에서 scripts/templates-web.sh 로 열 때 — 파이썬 서버(/api/…)가 배포처를 대신 다룬다.
+//   2) GitHub Pages 에 올려 두고 어디서나 열 때 — 서버가 없으므로 브라우저가 GitHub API 로 직접 다룬다.
+// 어느 쪽인지는 시작할 때 /api/catalog 를 한 번 찔러 보고 정한다.
+
+const GIST_ID = "cd91dda6443ffb827d7f9a69740e0b35";  // 직원 폰들이 문구를 받아 가는 배포처(앱에도 같은 값이 박혀 있다)
+const TEMPLATES_FILE = "templates.json";
+const STAFF_FILE = "staff.json";
+const TOKEN_KEY = "cbm.token";
+
+const api = (path, opts) => fetch(path, opts).then(async (r) => {
+  const body = await r.text();
+  let data = null;
+  try { data = JSON.parse(body); } catch (e) { /* 그대로 둔다 */ }
+  if (!r.ok) throw new Error((data && data.error) || body || ("HTTP " + r.status));
+  return data;
+});
+
+/** 내 맥의 파이썬 서버가 뒤에 있는 경우. */
+const serverBackend = {
+  needsToken: false,
+  async load() {
+    const [catalog, staff] = await Promise.all([api("/api/catalog"), api("/api/staff")]);
+    return {
+      catalog: catalog.catalog, staff: staff.staff || [],
+      source: catalog.source || "", canPublish: catalog.canPublish !== false,
+    };
+  },
+  async publish(body) {
+    const res = await api("/api/publish", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    });
+    return res.source || "";
+  },
+};
+
+/** 서버 없이 브라우저가 GitHub API 로 직접. 열쇠(토큰)는 이 기기 안에만 둔다. */
+const githubBackend = {
+  needsToken: true,
+  token: "",
+  async call(method, body) {
+    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      method,
+      headers: {
+        Authorization: "Bearer " + this.token,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        ...(body ? { "Content-Type": "application/json" } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      cache: "no-store",
+    });
+    if (res.status === 401) throw new Error("열쇠가 맞지 않습니다. 다시 만들어 넣어 주세요.");
+    if (res.status === 403) throw new Error("이 열쇠에는 gist 권한이 없습니다. 열쇠를 만들 때 gist 를 골랐는지 보세요.");
+    if (res.status === 404) throw new Error("배포처를 찾지 못했습니다. 이 열쇠가 배포처 주인의 것인지 보세요.");
+    if (!res.ok) throw new Error("GitHub 응답 " + res.status);
+    this.scopes = (res.headers.get("x-oauth-scopes") || "").split(",").map((v) => v.trim()).filter(Boolean);
+    return res.json();
+  },
+  fileText(gist, name) {
+    const entry = (gist.files || {})[name];
+    return entry ? entry.content : null;
+  },
+  async load() {
+    const gist = await this.call("GET");
+    const templatesText = this.fileText(gist, TEMPLATES_FILE);
+    const staffText = this.fileText(gist, STAFF_FILE);
+    const catalog = templatesText ? JSON.parse(templatesText) : { format: 1, revision: 0, name: "", templates: [] };
+    const staff = staffText ? (JSON.parse(staffText).staff || []) : [];
+    return {
+      catalog, staff,
+      source: templatesText ? `배포처(개정 ${catalog.revision || 0})` : "배포처에 문구가 아직 없습니다",
+      canPublish: true,
+    };
+  },
+  async publish(body) {
+    await this.call("PATCH", { files: { [TEMPLATES_FILE]: { content: JSON.stringify(body, null, 2) + "\n" } } });
+    return `배포처(개정 ${body.revision})`;
+  },
+};
+
+let backend = serverBackend;
+
+/** 뒤에 파이썬 서버가 있는지 한 번 확인한다. 없으면 브라우저가 직접 하는 쪽으로 간다. */
+async function pickBackend() {
+  try {
+    const res = await fetch("/api/catalog", { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.catalog) return serverBackend;
+    }
+  } catch (e) { /* 서버가 없다 — 정상 */ }
+  return githubBackend;
+}
+
+function savedToken() {
+  try { return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY) || ""; } catch (e) { return ""; }
+}
+
+function rememberToken(token, persist) {
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+    (persist ? localStorage : sessionStorage).setItem(TOKEN_KEY, token);
+  } catch (e) { /* 저장을 막아 둔 브라우저면 이번만 쓴다 */ }
+}
+
+function forgetToken() {
+  try { localStorage.removeItem(TOKEN_KEY); sessionStorage.removeItem(TOKEN_KEY); } catch (e) { /* 넘어간다 */ }
+  githubBackend.token = "";
+}
+
+function showGate(message) {
+  $("gate").hidden = false;
+  const status = $("gate-status");
+  status.hidden = !message;
+  status.textContent = message || "";
+  status.className = "status " + (message ? "bad" : "busy");
+  $("gate-token").focus();
+}
+
+async function load() {
+  setStatus("불러오는 중…", "busy");
+  try {
+    const result = await backend.load();
+    state.staff = result.staff;
+    state.name = result.catalog.name || "";
+    state.revision = result.catalog.revision || 0;
+    state.templates = (result.catalog.templates || []).map((t) => ({
+      key: t.key, name: t.name, body: t.body, rules: t.rules || [], staff: t.staff || [],
+    }));
+    state.sel = 0; state.dirty = false; state.source = result.source; state.canPublish = result.canPublish;
+    setStatus("불러왔습니다", "ok");
+    if (backend === githubBackend && (githubBackend.scopes || []).some((s) => s !== "gist")) {
+      setStatus("불러왔습니다 · 열쇠 권한이 넓습니다", "warn");
+    }
+  } catch (e) {
+    if (backend.needsToken) { showGate(e.message); return; }
+    setStatus("불러오지 못했습니다: " + e.message, "bad");
+  }
+  drawAll();
+}
+
+function payload() {
+  return {
+    format: 1,
+    revision: state.revision + 1,
+    name: state.name || "이룸경영지원센터 공통 문구",
+    templates: state.templates.map((t) => {
+      const o = { key: t.key, name: (t.name || "").trim(), body: (t.body || "").trim(), rules: t.rules || [] };
+      if ((t.staff || []).length) o.staff = t.staff;
+      return o;
+    }),
+  };
+}
+
+async function publish() {
+  const errors = allIssues().filter((x) => x.level === "e");
+  if (errors.length) return;
+  const warns = allIssues().filter((x) => x.level === "w");
+  const who = state.templates.map((t) => `· ${t.name} → ${(t.staff || []).length ? t.staff.join(", ") : "모든 직원"}`).join("\n");
+  const okMsg = `문구 ${state.templates.length}개를 개정 ${state.revision + 1} 로 배포합니다.\n\n${who}\n\n` +
+    (warns.length ? `확인할 점 ${warns.length}가지가 있습니다(배포는 됩니다).\n\n` : "") +
+    "직원 폰은 앱을 열거나 통화 팝업이 닫힐 때 받아 갑니다(최대 1시간).";
+  if (!confirm(okMsg)) return;
+  setStatus("배포 중…", "busy");
+  $("btn-publish").disabled = true;
+  try {
+    const body = payload();
+    const source = await backend.publish(body);
+    state.revision = body.revision; state.dirty = false; state.source = source || state.source;
+    setStatus(`배포했습니다 · 개정 ${body.revision}`, "ok");
+    showDialog("배포했습니다", `<p>개정 <b>${body.revision}</b> 으로 올렸습니다. 문구 ${state.templates.length}개.</p>
+      <p>직원 폰은 앱을 열거나 <b>통화 팝업이 닫힐 때</b> 새 문구를 받아 갑니다. 늦어도 1시간 안에 모두 바뀝니다.</p>
+      <p class="hint">지금 바로 확인하려면 폰에서 템플릿 탭 → ⋮ → "공통 템플릿 지금 받아오기" 를 누르세요.</p>`);
+  } catch (e) {
+    setStatus("배포하지 못했습니다", "bad");
+    showDialog("배포하지 못했습니다", `<pre class="json">${esc(e.message)}</pre>
+      <p class="hint">${backend.needsToken
+        ? "열쇠가 만료됐거나 권한이 없을 수 있습니다. 오른쪽 위 \u2018열쇠 바꾸기\u2019 로 새 열쇠를 넣어 보세요."
+        : "터미널에서 <code>gh auth status</code> 로 로그인을 확인하세요."}</p>`);
+  }
+  drawAll();
+}
+
+function showDialog(title, html) {
+  $("dlg-title").textContent = title; $("dlg-body").innerHTML = html; $("dlg").showModal();
+}
+
+function download() {
+  const blob = new Blob([JSON.stringify(payload(), null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "templates.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function keyFor(name) {
+  const base = (name || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  let k = base || "t";
+  let n = 1;
+  while (state.templates.some((t) => t.key === k)) k = `${base || "t"}_${++n}`;
+  return k;
+}
+
+$("btn-add").onclick = () => {
+  state.templates.push({
+    key: keyFor("new"), name: "새 문구", rules: [], staff: [],
+    body: "대표님, 방금 통화드린 이룸경영지원센터 {담당자명} {담당자직함}입니다.\n\n\n\n{담당자명} {담당자직함}",
+  });
+  state.sel = state.templates.length - 1;
+  touch();
+};
+$("btn-dup").onclick = () => {
+  const t = state.templates[state.sel];
+  if (!t) return;
+  const copy = JSON.parse(JSON.stringify(t));
+  copy.name = t.name + " 사본";
+  copy.key = keyFor(t.key + "_copy");
+  state.templates.splice(state.sel + 1, 0, copy);
+  state.sel += 1;
+  touch();
+};
+$("btn-del").onclick = () => {
+  const t = state.templates[state.sel];
+  if (!t || !confirm(`"${t.name}" 문구를 지웁니다. 배포하면 직원 폰에서도 사라집니다(직원이 고친 것은 그 폰에만 남습니다).`)) return;
+  state.templates.splice(state.sel, 1);
+  state.sel = Math.max(0, state.sel - 1);
+  touch();
+};
+$("btn-reload").onclick = () => {
+  if (state.dirty && !confirm("고친 내용이 사라집니다. 다시 불러올까요?")) return;
+  load();
+};
+$("btn-download").onclick = download;
+$("btn-publish").onclick = publish;
+$("dlg-close").onclick = () => $("dlg").close();
+$("prev-staff").onchange = drawPreview;
+$("prev-time").onchange = drawPreview;
+window.addEventListener("beforeunload", (e) => { if (state.dirty) { e.preventDefault(); e.returnValue = ""; } });
+
+// ---- 시작 ----
+$("gate-enter").onclick = async () => {
+  const token = $("gate-token").value.trim();
+  if (!token) { showGate("열쇠를 넣어 주세요."); return; }
+  githubBackend.token = token;
+  $("gate-status").hidden = false;
+  $("gate-status").className = "status busy";
+  $("gate-status").textContent = "확인 중…";
+  try {
+    await githubBackend.call("GET");
+  } catch (e) {
+    githubBackend.token = "";
+    showGate(e.message);
+    return;
+  }
+  rememberToken(token, $("gate-remember").checked);
+  $("gate-token").value = "";
+  $("gate").hidden = true;
+  load();
+};
+$("gate-token").addEventListener("keydown", (e) => { if (e.key === "Enter") $("gate-enter").click(); });
+
+$("btn-token").onclick = () => {
+  if (state.dirty && !confirm("고친 내용이 사라집니다. 열쇠를 바꿀까요?")) return;
+  forgetToken();
+  state.dirty = false;
+  showGate("");
+};
+
+(async function start() {
+  backend = await pickBackend();
+  if (!backend.needsToken) { load(); return; }
+  $("btn-token").hidden = false;
+  const token = savedToken();
+  if (!token) { showGate(""); return; }
+  githubBackend.token = token;
+  load();
+})();
+</script>
+</body>
+</html>
