@@ -6,160 +6,253 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'self' https://api.github.com https://gist.githubusercontent.com; base-uri 'none'; form-action 'none'">
 <title>이룸 안내문자 현황판</title>
 <style>
+  /* ───── 디자인: iOS·macOS 26 · Windows 11 결(유리 막대 · 둥근 카드 · 묶인 목록) · 다크 모드 자동 ───── */
   :root {
-    --bg: #f5f6f8; --panel: #ffffff; --line: #e2e5ea; --text: #1a1d21; --muted: #6b7280;
-    --brand: #f26522; --brand-dark: #d4521a; --ok: #12805c; --warn: #b45309; --bad: #c22b2b;
-    --chip: #eef1f5;
+    color-scheme: light dark;
+    --accent: #f26522; --accent-strong: #d9531a; --accent-tint: rgba(242,101,34,.12); --accent-line: rgba(242,101,34,.35);
+    --bg: #f2f2f7; --bg-tint: radial-gradient(1200px 600px at 12% -10%, rgba(242,101,34,.10), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(90,120,255,.08), transparent 60%);
+    --surface: #ffffff; --surface-2: #f7f7fa; --fill: rgba(120,120,128,.12); --fill-2: rgba(120,120,128,.18);
+    --glass: rgba(255,255,255,.72); --glass-line: rgba(0,0,0,.08);
+    --text: #1d1d1f; --text-2: #6e6e73; --text-3: #8e8e93; --line: rgba(60,60,67,.14); --line-strong: rgba(60,60,67,.24);
+    --ok: #248a3d; --ok-tint: rgba(52,199,89,.14); --warn: #b25000; --warn-tint: rgba(255,159,10,.16); --bad: #d70015; --bad-tint: rgba(255,59,48,.12);
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
+    --shadow-lg: 0 24px 60px rgba(0,0,0,.18);
+    --bubble: #e9e9eb; --bubble-text: #1d1d1f; --device: #f2f2f7;
+    --r-xl: 22px; --r-lg: 18px; --r-md: 12px; --r-sm: 9px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --accent: #ff7a3d; --accent-strong: #ff9360; --accent-tint: rgba(255,122,61,.18); --accent-line: rgba(255,122,61,.45);
+      --bg: #000000; --bg-tint: radial-gradient(1200px 600px at 12% -10%, rgba(255,122,61,.14), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(90,120,255,.12), transparent 60%);
+      --surface: #1c1c1e; --surface-2: #232326; --fill: rgba(120,120,128,.24); --fill-2: rgba(120,120,128,.32);
+      --glass: rgba(28,28,30,.72); --glass-line: rgba(255,255,255,.10);
+      --text: #f5f5f7; --text-2: #a1a1a6; --text-3: #8e8e93; --line: rgba(84,84,88,.55); --line-strong: rgba(84,84,88,.8);
+      --ok: #30d158; --ok-tint: rgba(48,209,88,.18); --warn: #ffb340; --warn-tint: rgba(255,159,10,.20); --bad: #ff6961; --bad-tint: rgba(255,69,58,.20);
+      --shadow: 0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.35);
+      --bubble: #3a3a3c; --bubble-text: #f5f5f7; --device: #0f0f10;
+    }
   }
   * { box-sizing: border-box; }
   /* #gate 처럼 display 를 직접 정한 요소도 hidden 속성이 이기도록 */
   [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
   body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-    font-size: 14px; line-height: 1.55;
+    margin: 0; min-height: 100vh; background: var(--bg-tint), var(--bg); background-attachment: fixed; color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+    font-size: 15px; line-height: 1.55; letter-spacing: -0.005em; -webkit-font-smoothing: antialiased;
   }
+  ::selection { background: var(--accent-tint); }
+
+  /* 상단 유리 막대 */
   header {
-    position: sticky; top: 0; z-index: 10; background: var(--panel); border-bottom: 1px solid var(--line);
-    padding: 8px 18px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 10px 22px; background: var(--glass); border-bottom: 1px solid var(--glass-line);
+    -webkit-backdrop-filter: saturate(180%) blur(22px); backdrop-filter: saturate(180%) blur(22px);
   }
-  header h1 { font-size: 16px; margin: 0; font-weight: 700; white-space: nowrap; }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .brand .mark {
+    width: 30px; height: 30px; border-radius: 9px; flex: none; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 14px;
+    background: linear-gradient(145deg, #ff8a4c, var(--accent) 55%, #d4431a); box-shadow: 0 2px 8px rgba(242,101,34,.35), inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  header h1 { font-size: 16px; margin: 0; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; }
+  header h1 small { display: block; font-size: 11.5px; font-weight: 500; color: var(--text-2); letter-spacing: 0; }
   header .spacer { flex: 1; }
-  nav.tabs { display: flex; gap: 4px; }
+  /* 탭 = 알약 모양 전환 버튼 */
+  nav.tabs { display: flex; gap: 2px; padding: 3px; background: var(--fill); border-radius: 999px; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  nav.tabs::-webkit-scrollbar { display: none; }
   nav.tabs button {
-    border: none; background: transparent; padding: 7px 12px; border-radius: 8px; font-weight: 600; color: var(--muted); position: relative;
+    border: 0; background: transparent; padding: 6px 15px; border-radius: 999px; font-weight: 600; font-size: 14px; color: var(--text-2);
+    position: relative; white-space: nowrap; box-shadow: none; transition: background .18s ease, color .18s ease;
   }
-  nav.tabs button.on { background: #fff5ef; color: var(--brand); }
-  nav.tabs button .dot { display: none; position: absolute; top: 6px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
+  nav.tabs button:hover { background: transparent; color: var(--text); }
+  nav.tabs button.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.04); }
+  nav.tabs button .dot { display: none; position: absolute; top: 5px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
   nav.tabs button.dirty .dot { display: block; }
-  button {
-    font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--text);
-    border-radius: 8px; padding: 7px 13px; cursor: pointer;
+
+  /* 버튼 */
+  button, label.filebtn {
+    font: inherit; font-size: 14px; font-weight: 600; border: 0; background: var(--fill); color: var(--text);
+    border-radius: 999px; padding: 8px 16px; cursor: pointer; line-height: 1.2; transition: background .15s ease, transform .1s ease, opacity .15s ease;
   }
-  button:hover { background: #f0f2f5; }
-  button.primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 700; }
-  button.primary:hover { background: var(--brand-dark); }
-  button.primary:disabled { background: #d9dde3; border-color: #d9dde3; color: #8b9199; cursor: not-allowed; }
-  button.small { padding: 3px 9px; font-size: 13px; border-radius: 6px; }
+  button:hover, label.filebtn:hover { background: var(--fill-2); }
+  button:active { transform: scale(.98); }
+  button:focus-visible, label.filebtn:focus-within, .chip:focus-visible { outline: 3px solid var(--accent-line); outline-offset: 2px; }
+  button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+  button.primary { background: var(--accent); color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 4px 14px rgba(242,101,34,.28); }
+  button.primary:hover { background: var(--accent-strong); }
+  button.primary:disabled { background: var(--fill-2); color: var(--text-2); box-shadow: none; opacity: 1; }
+  button.small, label.filebtn { padding: 5px 12px; font-size: 13px; }
   button.danger { color: var(--bad); }
-  label.filebtn { display: inline-block; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 3px 9px; font-size: 13px; cursor: pointer; }
-  label.filebtn:hover { background: #f0f2f5; }
-  .bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 18px 0; }
-  .bar .rev { color: var(--muted); font-size: 13px; }
-  section.tab { padding-bottom: 40px; }
-  main { display: grid; grid-template-columns: 300px minmax(0, 1fr) 340px; gap: 14px; padding: 14px 18px 0; align-items: start; }
+  button.danger:hover { background: var(--bad-tint); }
+  label.filebtn { display: inline-block; }
+
+  /* 쪽 머리(탭마다 큰 제목 + 할 일) */
+  .bar { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; padding: 24px 22px 4px; max-width: 1480px; margin: 0 auto; }
+  .bar .titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .bar .page { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.15; }
+  .bar .rev { color: var(--text-2); font-size: 13px; }
+  .bar .spacer { flex: 1; }
+  section.tab { padding-bottom: 56px; }
+  main { display: grid; grid-template-columns: 320px minmax(0, 1fr) 360px; gap: 16px; padding: 16px 22px 0; align-items: start; max-width: 1480px; margin: 0 auto; }
   @media (max-width: 1180px) { main { grid-template-columns: minmax(0, 1fr); } }
-  .wrap { padding: 14px 18px 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; min-width: 0; }
-  .panel > h2 { font-size: 13px; margin: 0 0 10px; color: var(--muted); font-weight: 700; letter-spacing: .02em; }
-  ul.list { list-style: none; margin: 0; padding: 0; }
-  ul.list li {
-    border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; margin-bottom: 7px; cursor: pointer;
-    display: flex; align-items: center; gap: 8px;
-  }
-  ul.list li.sel { border-color: var(--brand); background: #fff5ef; }
+  .wrap { padding: 16px 22px 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; max-width: 1480px; margin: 0 auto; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-xl); padding: 18px; min-width: 0; box-shadow: var(--shadow); }
+  .panel > h2 { font-size: 13px; margin: 0 0 12px; color: var(--text-2); font-weight: 600; letter-spacing: .01em; }
+  .panel > h2 .hint { font-weight: 500; }
+
+  /* 묶인 목록(설정 앱) */
+  ul.list { list-style: none; margin: 0; padding: 0; border-radius: var(--r-lg); overflow: hidden; background: var(--surface-2); border: 1px solid var(--line); }
+  ul.list li { padding: 10px 12px 10px 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; position: relative; transition: background .12s ease; }
+  ul.list li + li { border-top: 1px solid var(--line); }
+  ul.list li:hover { background: var(--fill); }
+  ul.list li.sel { background: var(--accent-tint); }
+  ul.list li.sel::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
   ul.list li .t { flex: 1; min-width: 0; }
-  ul.list li .t b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  ul.list li .t span { color: var(--muted); font-size: 12px; }
-  .mv { display: flex; flex-direction: column; gap: 2px; }
-  .mv button { padding: 0 5px; font-size: 11px; line-height: 15px; border-radius: 4px; }
-  label.f { display: block; margin-bottom: 12px; }
-  label.f > span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
-  input[type=text], input[type=password], textarea {
-    font: inherit; width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #fff; color: var(--text);
+  ul.list li .t b { display: block; font-weight: 600; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  ul.list li .t span { color: var(--text-2); font-size: 12.5px; }
+  .mv { display: flex; flex-direction: column; gap: 3px; }
+  .mv button { padding: 1px 7px; font-size: 10px; line-height: 16px; border-radius: 6px; background: var(--fill); }
+
+  /* 입력 */
+  label.f { display: block; margin-bottom: 16px; }
+  label.f > span { display: block; font-size: 12.5px; color: var(--text-2); margin-bottom: 6px; font-weight: 600; }
+  input[type=text], input[type=password], textarea, select {
+    font: inherit; font-size: 15px; width: 100%; border: 1px solid transparent; border-radius: var(--r-md); padding: 10px 12px;
+    background: var(--fill); color: var(--text); transition: box-shadow .15s ease, background .15s ease, border-color .15s ease;
   }
+  select { width: auto; padding: 8px 32px 8px 12px; appearance: none; -webkit-appearance: none; cursor: pointer;
+    background-image: linear-gradient(45deg, transparent 50%, var(--text-2) 50%), linear-gradient(135deg, var(--text-2) 50%, transparent 50%);
+    background-position: calc(100% - 17px) 55%, calc(100% - 12px) 55%; background-size: 5px 5px; background-repeat: no-repeat; }
+  input[readonly] { color: var(--text-2); cursor: not-allowed; }
   textarea { min-height: 320px; resize: vertical; line-height: 1.7; }
-  input:focus, textarea:focus { outline: 2px solid var(--brand); outline-offset: -1px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  input:focus, textarea:focus, select:focus { outline: none; background: var(--surface); border-color: var(--accent-line); box-shadow: 0 0 0 4px var(--accent-tint); }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
   .chip {
-    border: 1px solid var(--line); background: var(--chip); border-radius: 999px; padding: 4px 11px; cursor: pointer; user-select: none; font-size: 13px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 999px; padding: 6px 13px; cursor: pointer;
+    user-select: none; font-size: 13.5px; font-weight: 500;
   }
-  .chip.on { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
-  .vars { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-  .vars button { font-size: 12px; padding: 3px 9px; border-radius: 6px; color: var(--brand); border-color: #f6cdb4; background: #fff6f1; }
-  .counts { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; margin-top: 8px; }
+  .chip:hover { background: var(--fill); }
+  .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .chip.bad { border-color: var(--bad); color: var(--bad); }
+  .chip.bad.on { background: var(--bad); border-color: var(--bad); color: #fff; }
+  .vars { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .vars button { font-size: 12.5px; font-weight: 600; padding: 4px 11px; color: var(--accent); background: var(--accent-tint); }
+  .staffbox { max-height: 200px; overflow: auto; border-radius: var(--r-md); padding: 10px; background: var(--surface-2); border: 1px solid var(--line); }
+
+  /* 폰 미리보기(메시지 말풍선) */
+  .phone { background: var(--device); border-radius: 26px; padding: 16px 14px 18px; margin-top: 6px; border: 1px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.4); }
+  .phone::before { content: "문자 메시지"; display: block; text-align: center; font-size: 11.5px; color: var(--text-3); margin-bottom: 10px; font-weight: 500; }
+  .bubble {
+    background: var(--bubble); color: var(--bubble-text); border-radius: 20px 20px 20px 6px; padding: 11px 14px; white-space: pre-wrap; word-break: break-all;
+    font-size: 14px; line-height: 1.62; max-width: 94%;
+  }
+  .bubble .tail { color: var(--text-3); }
+  .fold { border-top: 1px dashed var(--line-strong); margin: 8px 0 6px; font-size: 11px; color: var(--text-3); text-align: center; padding-top: 4px; }
+  .counts { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; margin-top: 12px; color: var(--text-2); }
   .counts b { font-variant-numeric: tabular-nums; }
   .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); }
-  .issues { margin: 10px 0 0; padding: 0; list-style: none; }
-  .issues li { font-size: 13px; padding: 5px 9px; border-radius: 7px; margin-bottom: 5px; }
-  .issues li.e { background: #fdeaea; color: #8f1d1d; }
-  .issues li.w { background: #fdf3e2; color: #7c4a06; }
-  .phone { background: #dfe4ea; border-radius: 16px; padding: 12px; margin-top: 4px; }
-  .bubble {
-    background: #fff; border-radius: 4px 14px 14px 14px; padding: 11px 13px; white-space: pre-wrap; word-break: break-all;
-    font-size: 13.5px; line-height: 1.65; box-shadow: 0 1px 2px rgba(0,0,0,.08);
-  }
-  .bubble .tail { color: #9aa2ad; }
-  .fold { border-top: 1px dashed #c3c9d2; margin: 7px 0 5px; font-size: 11px; color: #8e959f; text-align: center; }
-  .note { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
-  .status { font-size: 13px; padding: 6px 11px; border-radius: 8px; }
-  .status.ok { background: #e6f5ef; } .status.bad { background: #fdeaea; } .status.busy { background: #eef1f5; color: var(--muted); } .status.warn { background: #fdf3e2; }
+
+  /* 알림 줄 */
+  .issues { margin: 12px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+  .issues:empty { display: none; }
+  .issues li { font-size: 13px; padding: 8px 12px 8px 30px; border-radius: var(--r-md); position: relative; line-height: 1.5; }
+  .issues li::before { content: ""; position: absolute; left: 12px; top: 13px; width: 8px; height: 8px; border-radius: 50%; }
+  .issues li.e { background: var(--bad-tint); color: var(--bad); }
+  .issues li.e::before { background: var(--bad); }
+  .issues li.w { background: var(--warn-tint); color: var(--warn); }
+  .issues li.w::before { background: var(--warn); }
+  .note { color: var(--text-2); font-size: 12.5px; margin: 10px 0 0; line-height: 1.6; }
+  .status { font-size: 12.5px; font-weight: 600; padding: 6px 12px 6px 24px; border-radius: 999px; position: relative; white-space: nowrap; }
+  .status::before { content: ""; position: absolute; left: 11px; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: currentColor; }
+  .status.ok { background: var(--ok-tint); color: var(--ok); } .status.bad { background: var(--bad-tint); color: var(--bad); }
+  .status.busy { background: var(--fill); color: var(--text-2); } .status.warn { background: var(--warn-tint); color: var(--warn); }
   .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  dialog { border: 1px solid var(--line); border-radius: 14px; padding: 18px; max-width: 560px; width: calc(100% - 36px); }
-  dialog::backdrop { background: rgba(20,22,26,.42); }
-  dialog h3 { margin: 0 0 10px; font-size: 15px; }
-  pre.json { background: #f5f6f8; border-radius: 8px; padding: 10px; font-size: 12px; max-height: 320px; overflow: auto; white-space: pre-wrap; }
-  .empty { color: var(--muted); font-size: 13px; padding: 12px 2px; }
-  .staffbox { max-height: 190px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
-  .hint { font-size: 12px; color: var(--muted); }
-  code { background: #eef1f5; border-radius: 4px; padding: 1px 5px; font-size: 12.5px; word-break: break-all; }
+  .empty { color: var(--text-2); font-size: 13.5px; padding: 14px 4px; }
+  .hint { font-size: 12.5px; color: var(--text-2); }
+  code { background: var(--fill); border-radius: 6px; padding: 1px 6px; font-size: 12.5px; word-break: break-all; }
+
+  /* 대화 상자 */
+  dialog {
+    border: 1px solid var(--glass-line); border-radius: var(--r-xl); padding: 22px; max-width: 560px; width: calc(100% - 36px);
+    background: var(--surface); color: var(--text); box-shadow: var(--shadow-lg);
+  }
+  dialog::backdrop { background: rgba(0,0,0,.32); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  dialog h3 { margin: 0 0 10px; font-size: 18px; letter-spacing: -0.015em; }
+  dialog p { margin: 0 0 8px; }
+  pre.json { background: var(--fill); border-radius: var(--r-md); padding: 12px; font-size: 12px; max-height: 320px; overflow: auto; white-space: pre-wrap; }
 
   /* 현황 */
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 6px; }
-  .card h3 { margin: 0; font-size: 13px; color: var(--muted); font-weight: 700; }
-  .card .big { font-size: 22px; font-weight: 700; line-height: 1.2; }
-  .card .sub { font-size: 12.5px; color: var(--muted); }
-  .card .row { margin-top: auto; padding-top: 6px; }
-  .card img { width: 100%; border-radius: 8px; border: 1px solid var(--line); background: #fff; }
-  .glance { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
-  .glance .g { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: #fafbfc; }
-  .glance .g h4 { margin: 0 0 2px; font-size: 13.5px; }
-  .glance .g .meta { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-  .glance .g pre { margin: 0; white-space: pre-wrap; word-break: break-all; font: 12.5px/1.6 inherit; font-family: inherit; }
-  .how li { margin-bottom: 4px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-xl); padding: 18px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--shadow); }
+  .card h3 { margin: 0; font-size: 13px; color: var(--text-2); font-weight: 600; }
+  .card .big { font-size: 30px; font-weight: 700; line-height: 1.15; letter-spacing: -0.03em; }
+  .card .sub { font-size: 12.5px; color: var(--text-2); }
+  .card .row { margin-top: auto; padding-top: 8px; }
+  .card img { width: 100%; border-radius: var(--r-sm); border: 1px solid var(--line); background: #fff; }
+  .glance { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .glance .g { border: 1px solid var(--line); border-radius: var(--r-lg); padding: 14px; background: var(--surface-2); }
+  .glance .g h4 { margin: 0 0 2px; font-size: 14px; letter-spacing: -0.01em; }
+  .glance .g .meta { font-size: 12px; color: var(--text-2); margin-bottom: 10px; }
+  .glance .g pre { margin: 0; white-space: pre-wrap; word-break: break-all; font: inherit; font-size: 13px; line-height: 1.6; background: var(--bubble); color: var(--bubble-text); border-radius: 18px 18px 18px 6px; padding: 10px 13px; }
+  ul.how { margin: 0; padding-left: 20px; }
+  .how li { margin-bottom: 6px; color: var(--text); }
+  .how li::marker { color: var(--text-3); }
 
-  /* 직원·명함 */
-  ul.roster { list-style: none; margin: 0; padding: 0; }
-  ul.roster li { display: flex; gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin-bottom: 8px; flex-wrap: wrap; }
-  ul.roster .thumb { width: 168px; height: 95px; border-radius: 6px; border: 1px solid var(--line); background: #f0f2f5; display: flex; align-items: center; justify-content: center; overflow: hidden; color: var(--muted); font-size: 12px; flex: none; }
+  /* 직원·명함 · 회사 사진 */
+  ul.roster { list-style: none; margin: 0; padding: 0; border-radius: var(--r-lg); overflow: hidden; border: 1px solid var(--line); background: var(--surface-2); }
+  ul.roster:empty { display: none; }
+  ul.roster li { display: flex; gap: 14px; align-items: center; padding: 12px 14px; flex-wrap: wrap; }
+  ul.roster li + li { border-top: 1px solid var(--line); }
+  ul.roster .thumb { width: 168px; height: 95px; border-radius: 10px; border: 1px solid var(--line); background: var(--fill); display: flex; align-items: center; justify-content: center; overflow: hidden; color: var(--text-2); font-size: 12px; flex: none; }
   ul.roster .thumb img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
   ul.roster .fields { display: flex; gap: 8px; flex: 1; min-width: 220px; align-items: center; }
-  ul.roster .fields .n { font-size: 12px; color: var(--muted); width: 26px; text-align: right; }
+  ul.roster .fields .n { font-size: 12px; color: var(--text-3); width: 22px; text-align: right; font-variant-numeric: tabular-nums; }
   ul.roster .fields input { width: auto; flex: 1; min-width: 90px; }
   ul.roster .ractions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-  ul.roster .meta { font-size: 12px; color: var(--muted); width: 100%; padding-left: 180px; }
-  ul.roster li.new { border-color: var(--brand); }
+  ul.roster .meta { font-size: 12px; color: var(--text-2); width: 100%; padding-left: 182px; }
+  ul.roster li.new { background: var(--accent-tint); }
   ul.shared-list .thumb { width: 96px; height: 128px; }
-  ul.shared-list .fields b { font-size: 13.5px; }
+  ul.shared-list .fields b { font-size: 14px; }
   .card .thumbs { display: flex; gap: 6px; align-items: flex-start; }
   .card .thumbs img { width: auto; height: 96px; max-width: 32%; object-fit: contain; }
-  .badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: #fdf3e2; color: #7c4a06; margin-left: 6px; }
+  .badge { display: inline-block; vertical-align: middle; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--warn-tint); color: var(--warn); margin-left: 6px; letter-spacing: 0; }
 
-  /* 휴대폰 폭: 탭은 옆으로 밀어 보고, 여백과 사진 칸을 줄인다(대표가 폰에서 열 때) */
+  /* 열쇠 넣기 */
+  #gate { position: fixed; inset: 0; background: var(--bg-tint), var(--bg); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 50; }
+  .gate-card { background: var(--surface); border: 1px solid var(--line); border-radius: 26px; padding: 28px; max-width: 460px; width: 100%; box-shadow: var(--shadow-lg); }
+  .gate-card .mark { width: 52px; height: 52px; border-radius: 15px; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 22px; margin-bottom: 14px;
+    background: linear-gradient(145deg, #ff8a4c, var(--accent) 55%, #d4431a); box-shadow: 0 6px 18px rgba(242,101,34,.35), inset 0 1px 0 rgba(255,255,255,.35); }
+  .gate-card h2 { margin: 0 0 6px; font-size: 22px; letter-spacing: -0.02em; }
+  .gate-lead { margin: 0 0 18px; color: var(--text-2); font-size: 14px; }
+  .gate-remember { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); margin-top: -6px; }
+  .gate-remember input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .gate-help { margin: 16px 0 0; font-size: 12.5px; color: var(--text-2); line-height: 1.65; }
+
+  /* 휴대폰 폭 */
   @media (max-width: 640px) {
-    header { padding: 8px 12px; gap: 8px; }
-    nav.tabs { overflow-x: auto; max-width: 100%; }
-    nav.tabs button { padding: 7px 9px; white-space: nowrap; }
-    .bar, .wrap, main { padding-left: 12px; padding-right: 12px; }
+    header { padding: 8px 12px; gap: 10px; }
+    header h1 small { display: none; }
+    nav.tabs { order: 3; width: 100%; }
+    nav.tabs button { flex: 1; padding: 7px 10px; }
+    .bar { padding: 18px 14px 2px; }
+    .bar .page { font-size: 24px; }
+    .wrap, main { padding-left: 12px; padding-right: 12px; }
+    .panel, .card { border-radius: var(--r-lg); padding: 14px; }
     textarea { min-height: 220px; }
     ul.roster .thumb { width: 120px; height: 68px; }
     ul.roster .meta { padding-left: 0; }
     .glance { grid-template-columns: minmax(0, 1fr); }
   }
-
-  #gate { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 50; }
-  .gate-card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px; max-width: 460px; width: 100%; }
-  .gate-card h2 { margin: 0 0 6px; font-size: 17px; }
-  .gate-lead { margin: 0 0 16px; color: var(--muted); font-size: 13.5px; }
-  .gate-remember { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); margin-top: -4px; }
-  .gate-help { margin: 14px 0 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
 <header>
-  <h1>이룸 안내문자 현황판</h1>
-  <nav class="tabs" id="tabs">
+  <div class="brand">
+    <div class="mark" aria-hidden="true">이</div>
+    <h1>이룸 안내문자<small>현황판 · 모든 직원 폰의 문구·명함·사진</small></h1>
+  </div>
+  <nav class="tabs" id="tabs" aria-label="화면">
     <button data-tab="overview" class="on">현황</button>
     <button data-tab="templates">문구<i class="dot"></i></button>
     <button data-tab="staff">직원·명함<i class="dot"></i></button>
@@ -167,16 +260,19 @@
   </nav>
   <span class="spacer"></span>
   <span class="status busy" id="status">시작</span>
-  <button id="btn-token" hidden>열쇠 바꾸기</button>
-  <button id="btn-reload">다시 불러오기</button>
+  <button id="btn-reload" class="small">다시 불러오기</button>
+  <button id="btn-token" class="small" hidden>열쇠 바꾸기</button>
 </header>
 
 <!-- ───────── 현황 ───────── -->
 <section class="tab" id="tab-overview">
+  <div class="bar">
+    <div class="titles"><h2 class="page">현황</h2><span class="rev">배포처에 올라가 있는 것 = 직원 폰이 받아 가는 것</span></div>
+  </div>
   <div class="wrap">
     <div class="cards" id="ov-cards"></div>
     <div class="panel">
-      <h2>문구 한눈에 <span class="hint">(지금 직원 폰에 들어가 있는 문구. 고치려면 「문구」 탭)</span></h2>
+      <h2>문구 한눈에 <span class="hint">· 지금 직원 폰에 들어가 있는 문구입니다. 고치려면 「문구」 탭</span></h2>
       <div class="glance" id="ov-glance"></div>
     </div>
     <div class="panel">
@@ -184,9 +280,10 @@
       <ul class="how">
         <li><b>문구</b> — 「문구」 탭에서 배포하면 직원 폰이 앱을 열거나 통화 팝업이 닫힐 때 받아 갑니다. 늦어도 <b>1시간</b>.</li>
         <li><b>직원·명함·회사 사진</b> — 「직원·명함」·「회사 사진」 탭에서 저장하면 같은 방법으로 <b>1시간</b> 안에 갑니다. <b>앱 v0.26 이상</b>인 폰만 사진이 바뀝니다(그 아래 버전은 설치 파일 안의 사진을 계속 씁니다).</li>
-        <li><b>앱 자체</b> — 새 버전을 올리면 폰이 <b>6시간</b>마다 확인해 설치를 권합니다(v0.20 이상). 그보다 낮은 폰은 아래 설치 링크로 한 번 다시 깔아야 그 뒤로 자동입니다.</li>
-        <li>폰은 아무것도 되돌려 보내지 않습니다(어느 폰이 어디까지 받았는지는 여기서 알 수 없습니다). 확인은 그 폰의 설정 화면에서.</li>
-        <li>새 직원: 여기서 이름·직함·명함을 넣고 → 폰에 앱을 깔고 → 폰 마이페이지에서 <b>자기 이름을 한 번 고르면</b> 그 명함이 붙습니다. 전화번호는 이 화면에 넣지 않습니다.</li>
+        <li><b>앱 자체</b> — 새 버전을 올리면 폰이 <b>6시간</b>마다 확인해 설치를 권합니다(v0.20 이상). 그보다 낮은 폰은 설치 링크로 한 번 다시 깔아야 그 뒤로 자동입니다.</li>
+        <li>폰은 아무것도 되돌려 보내지 않습니다(어느 폰이 어디까지 받았는지는 여기서 알 수 없습니다). 확인은 그 폰의 템플릿 탭 맨 위와 설정 화면에서.</li>
+        <li>새 직원: 여기서 이름·직함·명함을 넣고 → 폰에 앱을 깔고 → 폰 마이페이지 이름칸에 <b>이 명부와 같은 이름</b>(띄어쓰기 무관)과 직함을 넣어 저장하면 그 명함이 붙습니다. 전화번호는 이 화면에 넣지 않습니다.</li>
+        <li>문자 끝 서명의 이름·직함은 <b>각 폰 마이페이지 값</b>입니다. 여기서 이름·직함을 바꾸면 그 직원 폰의 마이페이지도 같게 고쳐 저장하세요(폰은 스스로 바꾸지 않습니다).</li>
       </ul>
     </div>
   </div>
@@ -195,16 +292,17 @@
 <!-- ───────── 문구 ───────── -->
 <section class="tab" id="tab-templates" hidden>
   <div class="bar">
-    <span class="rev" id="revline">불러오는 중…</span>
+    <div class="titles"><h2 class="page">문구</h2><span class="rev" id="revline">불러오는 중…</span></div>
     <span class="spacer"></span>
     <button id="btn-download">파일로 내려받기</button>
     <button class="primary" id="btn-publish">직원 폰에 배포하기</button>
   </div>
   <main>
     <section class="panel">
-      <h2>문구 목록 <span class="hint">(위에 있는 것이 팝업에서 먼저 보입니다)</span></h2>
+      <h2>문구 목록 <span class="hint">· 위에 있는 것이 팝업에서 먼저 보입니다</span></h2>
       <ul class="list" id="list"></ul>
-      <div class="row">
+      <ul class="issues" id="catalog-issues"></ul>
+      <div class="row" style="margin-top:12px">
         <button class="small" id="btn-add">+ 새 문구</button>
         <button class="small" id="btn-dup">복제</button>
         <button class="small danger" id="btn-del">삭제</button>
@@ -218,9 +316,9 @@
 
     <section class="panel">
       <h2>고객 폰에서 이렇게 보입니다</h2>
-      <div class="row" style="margin-bottom:8px">
-        <select id="prev-staff" style="font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line)"></select>
-        <select id="prev-time" style="font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line)">
+      <div class="row" style="margin-bottom:10px">
+        <select id="prev-staff" aria-label="미리보기 담당자"></select>
+        <select id="prev-time" aria-label="미리보기 시점">
           <option value="promise">팝업에서 날짜·시각을 고를 때</option>
           <option value="10">고르지 않고 18:00 전에 보낼 때</option>
           <option value="19">고르지 않고 18:00 이후에 보낼 때</option>
@@ -240,7 +338,7 @@
 <!-- ───────── 직원·명함 ───────── -->
 <section class="tab" id="tab-staff" hidden>
   <div class="bar">
-    <span class="rev" id="rosterline"></span>
+    <div class="titles"><h2 class="page">직원·명함</h2><span class="rev" id="rosterline"></span></div>
     <span class="spacer"></span>
     <button id="btn-staff-add">+ 직원 추가</button>
     <button class="primary" id="btn-roster-save">직원 폰에 반영하기</button>
@@ -249,8 +347,8 @@
     <div class="panel">
       <ul class="roster" id="roster"></ul>
       <ul class="issues" id="roster-issues"></ul>
-      <p class="note">명함 사진은 이 브라우저 안에서 긴 변 1280px 로 줄여 올립니다(원본은 올라가지 않습니다). 문자 한 통에 명함과 회사 사진이 함께 들어가므로 400KB 를 넘으면 경고합니다.</p>
-      <p class="note">직원을 지우면 그 명함도 함께 사라집니다. 이름을 바꾸면 「문구」 탭에서 그 사람 전용으로 지정한 문구가 풀리니 다시 지정하세요.</p>
+      <p class="note">명함 사진은 이 브라우저 안에서 긴 변 1280px 로 줄여 올립니다(원본은 올라가지 않습니다). 이미 문자용으로 맞춘 JPEG(1280px·400KB 이하)는 그대로 올려 검문본과 해시가 같습니다. 문자 한 통에 명함과 회사 사진이 함께 들어가므로 400KB 를 넘으면 경고합니다.</p>
+      <p class="note">직원을 지우면 그 명함도 함께 사라집니다. 이름·직함을 바꾸면 ① 그 직원 폰 마이페이지의 이름·직함도 같게 고쳐 저장해야 명함이 계속 붙고 서명이 맞습니다 ② 「문구」 탭에서 그 사람 전용 문구의 받는 직원을 다시 고르세요.</p>
     </div>
   </div>
 </section>
@@ -258,7 +356,7 @@
 <!-- ───────── 회사 사진 ───────── -->
 <section class="tab" id="tab-shared" hidden>
   <div class="bar">
-    <span class="rev" id="sharedline"></span>
+    <div class="titles"><h2 class="page">회사 사진</h2><span class="rev" id="sharedline"></span></div>
     <span class="spacer"></span>
     <button class="primary" id="btn-roster-save-2">직원 폰에 반영하기</button>
   </div>
@@ -266,7 +364,7 @@
     <div class="panel">
       <h2>모든 직원의 안내 문자에 함께 나가는 회사 사진</h2>
       <ul class="roster shared-list" id="shared-list"></ul>
-      <div class="row" style="margin-top:10px">
+      <div class="row" style="margin-top:12px">
         <label class="filebtn">+ 사진 추가<input type="file" accept="image/*" id="shared-file" hidden></label>
         <span class="hint" id="shared-sum"></span>
       </div>
@@ -279,12 +377,13 @@
 
 <div id="gate" hidden>
   <div class="gate-card">
+    <div class="mark" aria-hidden="true">이</div>
     <h2>이룸 안내문자 현황판</h2>
-    <p class="gate-lead">이 화면을 쓰려면 <b>GitHub 열쇠(토큰)</b>가 필요합니다. 회사 배포처를 고칠 수 있는 열쇠입니다.</p>
+    <p class="gate-lead">이 화면을 쓰려면 <b>GitHub 열쇠(토큰)</b>가 필요합니다. 모든 직원 폰의 문구·명함·사진을 고칠 수 있는 열쇠입니다.</p>
     <label class="f"><span>열쇠 (ghp_ 로 시작합니다)</span>
       <input type="password" id="gate-token" autocomplete="off" spellcheck="false" placeholder="ghp_…"></label>
-    <label class="gate-remember"><input type="checkbox" id="gate-remember" checked> 이 기기에 기억하기 (내 컴퓨터·내 폰에서만 체크하세요)</label>
-    <div class="row" style="margin-top:12px">
+    <label class="gate-remember"><input type="checkbox" id="gate-remember"> 이 기기에 기억하기 (내 컴퓨터·내 폰에서만 켜세요)</label>
+    <div class="row" style="margin-top:16px">
       <button class="primary" id="gate-enter">들어가기</button>
       <span class="status busy" id="gate-status" hidden></span>
     </div>
@@ -295,8 +394,8 @@
 <dialog id="dlg">
   <h3 id="dlg-title"></h3>
   <div id="dlg-body"></div>
-  <div class="row" style="justify-content:flex-end;margin-top:14px">
-    <button id="dlg-close">닫기</button>
+  <div class="row" style="justify-content:flex-end;margin-top:16px">
+    <button id="dlg-close" class="primary">닫기</button>
   </div>
 </dialog>
 
@@ -313,7 +412,9 @@ const LIMITS = {
   maxKey: 40,
   maxTemplates: 50,
 };
-const RULES = [["incoming", "걸려온 전화"], ["outgoing", "내가 건 전화"], ["missed", "부재중"]];
+// 고를 수 있는 자동 규칙. 받지 못한 수신 전화(missed)에는 팝업을 띄우지 않는다(9/25 검문 C-66 · 앱 시험: 자동 규칙은 이 둘뿐).
+const RULES = [["incoming", "걸려온 전화"], ["outgoing", "내가 건 전화"]];
+const RULE_NAMES = { incoming: "걸려온 전화", outgoing: "내가 건 전화", missed: "받지 못한 수신 전화" };
 const VARS = [["{담당자명}", "담당자 이름"], ["{담당자직함}", "직함"], ["{약속시점}", "팝업에서 고른 날짜·시각 (고르지 않으면 오늘 안에 / 다음 영업일 오전까지)"], ["{회사명}", "회사 이름"], ["{담당자연락처}", "담당자 번호"]];
 const BANNED = ["http", "www.", "%"];
 // 제나 금지어(앱 domain/policy/CopyGuard.kt 와 같은 목록 · BuiltInCatalogTest 가 대조한다 · 2026-09-30 JENA D-136).
@@ -337,7 +438,8 @@ const PROMISE_SAMPLE = "10/1(목) 10:00에";
 // 앱 BuiltInCatalogTest 와 같은 어조 규칙(부탁·사과·낮춤 · 2026-09-16 대표 평가). 배포는 막지 않고 경고한다.
 const WEAK = ["부탁드", "죄송", "양해", "괜찮으시", "조르지", "번거로우", "실례", "정하셔도 됩니다", "감사합니다", "해 주시면 감사"];
 // 약속 없는 판(개정 17)에 남으면 안 되는 약속 낱말
-const PROMISE_WORDS = ["정리해", "추려", "연락드리", "전화드리겠", "보내드리", "알려드리", "안내하겠", "{약속시점}"];
+// (앱 BuiltInCatalogTest 「약속 없는 판에는 추천·정리·다시 연락 약속과 약속 시점이 없다」와 같은 목록)
+const PROMISE_WORDS = ["정리해", "추려", "골라", "추천", "검토해", "연락드리", "전화드리겠", "보내드리", "알려드리", "안내하겠", "목록", "확인하신", "접수 가능한 자금", "{약속시점}"];
 
 // ---- 사진·명부 규칙 (docs/ADR-010, domain/images/) ----
 const PHOTO = { maxSide: 1280, quality: 0.85, warnBytes: 400 * 1024, maxBytes: 1024 * 1024, maxStaff: 50, maxName: 20, maxTitle: 20 };
@@ -349,7 +451,9 @@ const ORDINAL = ["첫째", "둘째", "셋째", "넷째", "다섯째", "여섯째
 const nthPhoto = (i) => (ORDINAL[i] || `${i + 1}번째`) + " 장";
 const sharedBytes = () => state.roster.shared.reduce((n, x) => n + (x.bytes || 0), 0);
 const FILE_RE = /^(card|shared)-[0-9a-f]{12}\.b64$/;
-const PHONE_RE = /01[016789][-. ]?\d{3,4}[-. ]?\d{4}/;
+const PHONE_RE = /(?:\+?82[-. ]?|0)1[016789][-. ]?\d{3,4}[-. ]?\d{4}/;
+// 앱 StaffImageCodec.isSafeText 와 같은 글자. 이름·직함에 있으면 폰이 명부 전체를 받지 않는다.
+const UNSAFE_TEXT = /[\/\\:\u0000-\u001f\u007f-\u009f]/;
 
 let state = {
   name: "", revision: 0, templates: [], staff: [], sel: 0, dirty: false, source: "", canPublish: true,
@@ -361,22 +465,27 @@ let state = {
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const kb = (n) => `${Math.round((n || 0) / 1024)}KB`;
+/** 앱 CatalogTemplate.canonicalStaffName 과 같은 이름 비교(앞뒤·안쪽 공백 무시 · 자모 NFC). */
+const canonName = (n) => String(n || "").normalize("NFC").trim().replace(/\s+/g, "");
+const sameName = (a, b) => canonName(a) === canonName(b) && canonName(a) !== "";
 
 function render(body, staff, hour, promise) {
   const deadline = promise || (hour >= DEADLINE_CUTOFF_HOUR ? DEADLINE_TOMORROW : "오늘 안에");
-  return body
-    .split("{담당자명}").join(staff.name)
-    .split("{담당자직함}").join(staff.title)
-    .split("{약속시점}").join(deadline)
-    .split("{회사명}").join("이룸경영지원센터")
-    .split("{담당자연락처}").join(staff.phone || "010-0000-0000")
-    .replace(/[ \t]{2,}/g, " ").replace(/ +\n/g, "\n");
+  const values = [["{담당자명}", staff.name], ["{담당자연락처}", staff.phone || "010-0000-0000"], ["{담당자직함}", staff.title], ["{회사명}", "이룸경영지원센터"], ["{약속시점}", deadline]];
+  let text = body;
+  for (const [key, raw] of values) {
+    if (!text.includes(key)) continue;
+    const value = String(raw || "").trim();
+    if (!value) text = text.split(" " + key).join("");   // 직함이 비어 "김담당 입니다" 처럼 떨어지지 않게(앱과 같음)
+    text = text.split(key).join(value);
+  }
+  return text.replace(/[ \t]{2,}/g, " ").replace(/ +\n/g, "\n").replace(/ +$/, "");
 }
 
 /** 이 문구를 받을 직원 중 이름+직함이 가장 긴 사람. 지정이 없으면 최악 조합으로 본다. */
 function worstStaffFor(t) {
   const picked = (t.staff && t.staff.length)
-    ? state.staff.filter((s) => t.staff.includes(s.name))
+    ? state.staff.filter((s) => t.staff.some((n) => sameName(n, s.name)))
     : state.staff;
   const pool = picked.length ? picked : [WORST];
   let worst = pool[0];
@@ -391,7 +500,7 @@ function worstStaffFor(t) {
 function sharesStaff(a, b) {
   const x = a.staff || [], y = b.staff || [];
   if (!x.length || !y.length) return true;
-  return x.some((n) => y.includes(n));
+  return x.some((n) => y.some((m) => sameName(m, n)));
 }
 
 function checkTemplate(t, index) {
@@ -429,10 +538,16 @@ function checkTemplate(t, index) {
   if ((staff.name + staff.title).length < (WORST.name + WORST.title).length && worstCase.length > LIMITS.maxChars) {
     add("w", `이름이 긴 담당자(${WORST.name} ${WORST.title})가 들어오면 ${worstCase.length}자가 됩니다.`);
   }
-  const head = render(body, staff, CHECK_HOURS[1]).slice(0, LIMITS.visibleHead);
-  const wantsDeadline = body.includes("{약속시점}");
-  if (wantsDeadline && !head.includes(DEADLINE_TOMORROW)) {
-    add("w", `언제까지 보내 주겠다는 약속이 앞 ${LIMITS.visibleHead}자 밖에 있습니다. 문자가 접히면 안 보입니다.`);
+  // 접혀도 보이는 앞부분: 약속이 있는 판은 약속 시점이, 없는 판은 보낸 사람이 들어 있어야 한다(앱 시험과 같은 세 판으로 본다)
+  const hasPromise = body.includes("{약속시점}");
+  for (const v of variants) {
+    const head = render(body, staff, v.hour, v.promise).slice(0, LIMITS.visibleHead);
+    if (hasPromise && ![v.promise, "오늘 안에", DEADLINE_TOMORROW].filter(Boolean).some((x) => head.includes(x))) {
+      add("w", `언제 연락하겠다는 약속이 앞 ${LIMITS.visibleHead}자 밖에 있습니다. 문자가 접히면 안 보입니다.`); break;
+    }
+    if (!hasPromise && staff.name && !head.includes(staff.name)) {
+      add("w", `누가 보냈는지(담당자 이름)가 앞 ${LIMITS.visibleHead}자 밖에 있습니다. 문자가 접히면 안 보입니다.`); break;
+    }
   }
   // 답장을 청하는 문장은 넣지 않는다(2026-09-30 대표 지시 · 개정 14). 다음 연락은 문자에 적은 약속 시각에 우리가 전화로 한다.
   if (/답 ?주세요|답장 ?주세요|답 주시면|문자로 주세요/.test(body)) {
@@ -445,6 +560,7 @@ function checkTemplate(t, index) {
   for (const w of COPY_CHECK) if (body.includes(w)) add("w", `"${w}" 가 들어 있습니다. 근거가 확인된 표현인지 제나 검문을 받은 뒤 배포하세요.`);
   if (MAX_AMOUNT.test(body)) add("e", "\"최대 O억\" 같은 금액 약속은 넣지 않습니다(제나 rules/04).");
   if (!body.startsWith(BRAND)) add("e", `문구는 ${BRAND} 로 시작해야 합니다(저장 안 된 번호의 문자가 사칭 문자와 같은 모양이 되지 않게 · 09-25 검문 C3).`);
+  else if (!body.startsWith(BRAND + "\n대표님, ")) add("w", `첫 줄은 ${BRAND} 만 쓰고, 둘째 줄을 「대표님, 」으로 시작하세요(2026-09-30 대표 지시).`);
   for (const w of PHOTO_ONLY) if (body.includes(w)) add("w", `"${w}" 는 사진에 이미 있습니다. 글에서 빼세요.`);
   if (!body.endsWith("{담당자명} {담당자직함}")) add("w", "마지막 줄을 담당자 서명으로 끝내는 것을 권합니다.");
   for (const w of WEAK) if (body.includes(w)) add("w", `"${w}" 는 부탁하거나 스스로를 낮추는 말입니다. 알려 드리는 말투로 바꾸는 것을 권합니다.`);
@@ -452,28 +568,56 @@ function checkTemplate(t, index) {
   if (body.includes("'진행'") || body.includes("‘진행’")) add("e", "\"'진행' 답장\" 처럼 계약 의사를 문자로 받지 않습니다(계약은 미팅에서 · 직원 매뉴얼 4-1).");
   for (const w of ["되는 것만", "안 되는 건", "소진되면 접수가 마감"]) if (body.includes(w)) add("w", `"${w}" 는 결과나 마감을 단정하는 말입니다(제나 검문 C1). 한정 어미로 바꾸세요.`);
   if (body.includes("재신청이 막히") && !body.includes("재신청이 막히는 자금도 있어")) add("w", "재신청 제한은 모든 자금에 해당하지 않습니다. \"재신청이 막히는 자금도 있어\" 처럼 한정 어미를 붙이세요.");
-  // 개정 17 규칙: 약속 없는 판에는 약속 문장이 없고, 부재 판은 통화가 있었다고 쓰지 않는다
-  if (name.endsWith("(약속 없음)")) {
+  // 개정 17 규칙: 약속 없는 판에는 추천·정리·다시 연락 약속이 없고, 약속 있는 판에는 약속 시점이 있고, 부재 판은 통화가 있었다고 쓰지 않는다
+  const isPlain = (t.key || "").endsWith("_plain") || name.includes("(약속 없음)");
+  if (isPlain) {
     const left = PROMISE_WORDS.filter((w) => body.includes(w));
-    if (left.length) add("w", `이름은 「약속 없음」인데 약속하는 말(${left.join(", ")})이 들어 있습니다.`);
+    if (left.length) add("w", `약속 없는 판인데 추천·정리·연락을 약속하는 말(${left.join(", ")})이 들어 있습니다.`);
+  } else if (/\((정리 후 연락|다시 전화)\)/.test(name) && !hasPromise) {
+    add("w", "약속 있는 판인데 {약속시점} 이 없습니다. 팝업에서 날짜·시각을 고르지 못합니다.");
   }
-  if (name.includes("부재") && /방금 통화|통화드린|말씀하신/.test(body)) add("w", "부재 문구에 통화가 있었다는 말(방금 통화·통화드린·말씀하신)이 있습니다. 받지 않은 분께는 사실과 다릅니다.");
+  if (((t.key || "").startsWith("no_answer") || name.includes("부재")) && /방금 통화|방금 전화|통화드린|말씀하신/.test(body)) {
+    add("w", "부재 문구에 통화가 있었다는 말(방금 통화·통화드린·말씀하신)이 있습니다. 받지 않은 분께는 사실과 다릅니다.");
+  }
+  // 규칙 값: 앱이 모르는 값이면 묶음 전체를 거절한다. 받지 못한 수신 전화 규칙은 쓰지 않는다(9/25 검문 C-66).
+  for (const rule of t.rules || []) {
+    if (rule === "missed") add("e", "「받지 못한 수신 전화」 뒤에는 팝업을 띄우지 않습니다(9/25 제나 검문). 이 규칙을 끄세요.");
+    else if (!RULES.some(([id]) => id === rule)) add("e", `알 수 없는 통화 유형입니다: ${rule}`);
+  }
+  if ((t.key || "").startsWith("no_answer") && (t.rules || []).length) add("e", "부재 문구에는 자동 규칙을 붙이지 않습니다. 받지 않은 발신 뒤 팝업에서 직원이 고릅니다.");
   // 한 통화 유형을 여러 문구가 맡으면 자동으로 골라지는 것이 만든 차례에 따라 정해져 직원이 예측할 수 없다.
   for (const rule of t.rules || []) {
     const rivals = state.templates.filter((o, i) => i !== index && (o.rules || []).includes(rule) && sharesStaff(o, t));
     if (rivals.length) {
-      const label = (RULES.find((x) => x[0] === rule) || [, rule])[1];
-      add("e", `"${label}" 을 ${rivals.map((r) => r.name).join(", ")} 도 맡고 있습니다. 자동으로 먼저 뜰 문구는 하나만 정하세요.`);
+      add("e", `"${RULE_NAMES[rule] || rule}" 을 ${rivals.map((r) => r.name).join(", ")} 도 맡고 있습니다. 자동으로 먼저 뜰 문구는 하나만 정하세요.`);
     }
   }
-  if ((t.staff || []).length && !state.staff.some((s) => t.staff.includes(s.name))) {
-    add("e", "받는 직원으로 고른 사람이 직원 명부에 없습니다.");
+  // 앱은 카탈로그의 규칙을 「없으면 만들기」로만 다룬다. 배포된 규칙을 빼도 이미 받은 폰에는 남는다.
+  const dropped = ((state.publishedRules || {})[t.key] || []).filter((r) => !(t.rules || []).includes(r));
+  if (dropped.length) {
+    add("w", `「${dropped.map((r) => RULE_NAMES[r] || r).join(", ")}」 규칙을 뺐지만, 이미 받은 폰에서는 지워지지 않아 추천이 바뀌지 않습니다(앱은 규칙을 더하기만 합니다).`);
   }
+  const missingStaff = (t.staff || []).filter((n) => !state.staff.some((s) => sameName(s.name, n)));
+  if (missingStaff.length && missingStaff.length === (t.staff || []).length) add("e", "받는 직원으로 고른 사람이 직원 명부에 없습니다.");
+  else if (missingStaff.length) add("w", `받는 직원 중 명부에 없는 이름이 있습니다: ${missingStaff.join(", ")}`);
   return issues;
 }
 
+/** 묶음 전체의 조건(앱이 묶음을 거절하거나, 통화 뒤 팝업이 사라지는 경우). */
+function catalogIssues() {
+  const out = [];
+  const add = (level, text) => out.push({ level, text, key: "", name: "문구 묶음 전체" });
+  if (state.templates.length > LIMITS.maxTemplates) add("e", `문구는 ${LIMITS.maxTemplates}개까지입니다. 넘으면 폰이 묶음 전체를 받지 않습니다.`);
+  for (const [type, label] of RULES) {
+    if (!state.templates.some((t) => !(t.staff || []).length && (t.rules || []).includes(type))) {
+      add("e", `「${label}」 뒤에 자동으로 뜰 문구(모든 직원)가 없습니다. 이대로 배포하면 새로 깐 폰에서는 그 통화 뒤 팝업이 뜨지 않습니다.`);
+    }
+  }
+  return out;
+}
+
 function allIssues() {
-  return state.templates.flatMap((t, i) => checkTemplate(t, i).map((x) => ({ ...x, key: t.key, name: t.name })));
+  return [...catalogIssues(), ...state.templates.flatMap((t, i) => checkTemplate(t, i).map((x) => ({ ...x, key: t.key, name: t.name })))];
 }
 
 // ---- 탭 ----
@@ -503,7 +647,7 @@ function drawList() {
     const li = document.createElement("li");
     if (i === state.sel) li.className = "sel";
     const who = (t.staff && t.staff.length) ? `${t.staff.join(", ")} 전용` : "모든 직원";
-    const kinds = (t.rules || []).map((r) => (RULES.find((x) => x[0] === r) || [, r])[1]).join(" · ") || "직접 고를 때만";
+    const kinds = (t.rules || []).map((r) => RULE_NAMES[r] || r).join(" · ") || "직접 고를 때만";
     li.innerHTML = `<div class="t"><b>${esc(t.name || "(이름 없음)")}${errs ? ' <span class="bad">●</span>' : ""}</b><span>${esc(kinds)} / ${esc(who)}</span></div>
       <div class="mv"><button class="small" data-up="${i}">▲</button><button class="small" data-down="${i}">▼</button></div>`;
     li.addEventListener("click", (e) => {
@@ -530,15 +674,18 @@ function drawEditor() {
       <textarea id="f-body" spellcheck="false">${esc(t.body || "")}</textarea>
       <div class="vars" id="f-vars"></div>
     </label>
-    <label class="f"><span>문구 키 (폰이 같은 문구를 알아보는 이름. 한 번 정하면 바꾸지 마세요)</span>
-      <input type="text" id="f-key" maxlength="${LIMITS.maxKey}" value="${esc(t.key || "")}"></label>`;
+    <label class="f"><span>문구 키 (폰이 같은 문구를 알아보는 이름${keyLocked(t) ? " · 이미 배포된 문구라 바꿀 수 없습니다" : ". 배포하면 바꿀 수 없습니다"})</span>
+      <input type="text" id="f-key" maxlength="${LIMITS.maxKey}" value="${esc(t.key || "")}"${keyLocked(t) ? " readonly" : ""}></label>`;
 
   const rulesBox = $("f-rules");
-  RULES.forEach(([id, label]) => {
+  const extra = (t.rules || []).filter((r) => !RULES.some(([id]) => id === r)).map((r) => [r, RULE_NAMES[r] || r]);
+  [...RULES, ...extra].forEach(([id, label]) => {
     const on = (t.rules || []).includes(id);
-    const el = document.createElement("span");
-    el.className = "chip" + (on ? " on" : "");
+    const el = document.createElement("button");
+    el.type = "button";
+    el.className = "chip" + (on ? " on" : "") + (RULES.some(([k]) => k === id) ? "" : " bad");
     el.textContent = label;
+    el.setAttribute("aria-pressed", on ? "true" : "false");
     el.onclick = () => {
       t.rules = on ? (t.rules || []).filter((r) => r !== id) : [...(t.rules || []), id];
       touch();
@@ -551,19 +698,23 @@ function drawEditor() {
     staffBox.innerHTML = '<span class="hint">직원 명부가 비어 있습니다. 「직원·명함」 탭에서 넣으세요.</span>';
   } else {
     const allOn = !(t.staff || []).length;
-    const every = document.createElement("span");
+    const every = document.createElement("button");
+    every.type = "button";
     every.className = "chip" + (allOn ? " on" : "");
+    every.setAttribute("aria-pressed", allOn ? "true" : "false");
     every.textContent = "모든 직원";
     every.onclick = () => { t.staff = []; touch(); };
     staffBox.appendChild(every);
     state.staff.forEach((s) => {
-      const on = (t.staff || []).includes(s.name);
-      const el = document.createElement("span");
+      const on = (t.staff || []).some((n) => sameName(n, s.name));
+      const el = document.createElement("button");
+      el.type = "button";
       el.className = "chip" + (on ? " on" : "");
+      el.setAttribute("aria-pressed", on ? "true" : "false");
       el.textContent = s.title ? `${s.name} ${s.title}` : s.name;
       el.onclick = () => {
         const cur = t.staff || [];
-        t.staff = on ? cur.filter((n) => n !== s.name) : [...cur, s.name];
+        t.staff = on ? cur.filter((n) => !sameName(n, s.name)) : [...cur, s.name];
         touch();
       };
       staffBox.appendChild(el);
@@ -585,7 +736,7 @@ function drawEditor() {
   });
 
   $("f-name").oninput = (e) => { t.name = e.target.value; touchLight(); };
-  $("f-key").oninput = (e) => { t.key = e.target.value.trim(); touchLight(); };
+  if (!keyLocked(t)) $("f-key").oninput = (e) => { t.key = e.target.value.trim(); touchLight(); };
   $("f-body").oninput = (e) => { t.body = e.target.value; touchLight(); };
 }
 
@@ -621,8 +772,11 @@ function drawPreview() {
 function drawTemplatesBar() {
   $("revline").textContent = `${state.name || "이름 없는 묶음"} · 개정 ${state.revision}${state.dirty ? " · 고친 내용 있음" : ""}` +
     (state.source ? ` · ${state.source}` : "");
-  const errors = allIssues().filter((x) => x.level === "e").length;
+  const errors = allIssues().filter((x) => x.level === "e").length + (state.revisionBad ? 1 : 0);
   $("btn-publish").disabled = errors > 0 || !state.templates.length || !state.canPublish;
+  const whole = catalogIssues().concat(state.revisionBad ? [{ level: "e", text: "배포처 개정 번호가 숫자가 아닙니다. 「다시 불러오기」 뒤에도 그러면 배포하지 말고 알려 주세요." }] : []);
+  const box = $("catalog-issues");
+  if (box) box.innerHTML = whole.map((x) => `<li class="${x.level}">${esc(x.text)}</li>`).join("");
   $("btn-publish").textContent = !state.canPublish ? "배포 토큰 없음" : errors > 0 ? `고칠 곳 ${errors}군데` : "직원 폰에 배포하기";
   $("btn-publish").title = !state.canPublish ? "서버에 배포용 GitHub 토큰(CBM_GITHUB_TOKEN)이 없습니다. 파일로 내려받아 내 맥에서 배포하세요." : "";
   const shared = state.roster.shared.length;
@@ -655,13 +809,13 @@ function drawOverview() {
   const shared = r.shared;
   const sharedThumbs = shared.map((x, i) => {
     const u = dataUrl(x);
-    return u ? `<img alt="회사 사진 ${i + 1}" title="문자에서 ${nthPhoto(i + 1)} · ${kb(x.bytes)}" src="${u}">` : "";
+    return u ? `<img alt="회사 사진 ${i + 1}" title="문자에서 ${nthPhoto(i + 1)} · ${kb(x.bytes)}" src="${esc(u)}">` : "";
   }).join("");
   $("ov-cards").innerHTML = `
     <div class="card">
       <h3>앱</h3>
       <div class="big">${v ? "v" + esc(v.versionName) : "확인 중…"}</div>
-      <div class="sub">${v ? `설치 파일 ${kb(v.sizeBytes)}${rel && rel.published_at ? " · " + when(rel.published_at) + " 배포" : ""}` : ""}</div>
+      <div class="sub">${v ? `폰에 안내하는 판 · 설치 파일 ${kb(v.sizeBytes)}` : ""}${rel && rel.tag_name ? ` · 설치 링크 ${esc(rel.tag_name)}${rel.published_at ? " (" + when(rel.published_at) + ")" : ""}` : ""}${v && rel && rel.tag_name && rel.tag_name !== "v" + v.versionName ? ' <span class="badge">판이 다릅니다</span>' : ""}</div>
       <div class="sub">${v && v.notes ? esc(v.notes) : ""}</div>
       <div class="row"><button class="small" id="btn-copy-link">설치 링크 복사</button><span class="hint">직원에게 보내면 항상 최신 버전이 깔립니다</span></div>
     </div>
@@ -669,7 +823,7 @@ function drawOverview() {
       <h3>문구</h3>
       <div class="big">개정 ${state.revision}${state.dirty ? '<span class="badge">고치는 중</span>' : ""}</div>
       <div class="sub">문구 ${state.templates.length}개 · 자동으로 먼저 뜨는 문구 ${state.templates.filter((t) => (t.rules || []).length).length}개 · 직원 전용 ${state.templates.filter((t) => (t.staff || []).length).length}개</div>
-      <div class="sub">폰에서 확인: 템플릿 탭 맨 위 「개정 ${state.revision}」</div>
+      <div class="sub">폰에서 확인: 템플릿 탭 맨 위 「… · r${state.revision}」(설정 → 공통 템플릿에는 「개정 ${state.revision}」)</div>
       <div class="row"><button class="small" data-go="templates">문구 고치기</button></div>
     </div>
     <div class="card">
@@ -697,7 +851,7 @@ function drawOverview() {
   g.innerHTML = state.templates.map((t) => {
     const staff = worstStaffFor(t);
     const who = (t.staff && t.staff.length) ? `${t.staff.join(", ")} 전용` : "모든 직원";
-    const kinds = (t.rules || []).map((x) => (RULES.find((y) => y[0] === x) || [, x])[1]).join(" · ") || "직원이 직접 고를 때";
+    const kinds = (t.rules || []).map((x) => RULE_NAMES[x] || x).join(" · ") || "직원이 직접 고를 때";
     return `<div class="g"><h4>${esc(t.name)}</h4><div class="meta">${esc(kinds)} · ${esc(who)}</div><pre>${esc(render((t.body || "").trim(), staff, 10))}</pre></div>`;
   }).join("");
 }
@@ -736,11 +890,13 @@ function rosterIssues() {
   if (r.staff.length > PHOTO.maxStaff) add("e", `직원은 ${PHOTO.maxStaff}명까지입니다.`);
   const seen = new Set();
   r.staff.forEach((s, i) => {
-    const who = s.name || `${i + 1}번째 직원`;
-    if (!s.name) add("e", `${i + 1}번째 직원의 이름이 비었습니다.`);
-    if (s.name.length > PHOTO.maxName) add("e", `${who}: 이름이 ${PHOTO.maxName}자를 넘습니다.`);
-    if (s.title.length > PHOTO.maxTitle) add("e", `${who}: 직함이 ${PHOTO.maxTitle}자를 넘습니다.`);
-    const key = s.name.replace(/\s+/g, "").toLowerCase();
+    const nm = s.name.normalize("NFC").trim();
+    const who = nm || `${i + 1}번째 직원`;
+    if (!nm) add("e", `${i + 1}번째 직원의 이름이 비었습니다.`);
+    if (UNSAFE_TEXT.test(s.name) || UNSAFE_TEXT.test(s.title)) add("e", `${who}: 이름·직함에 / \\ : 는 쓸 수 없습니다(폰이 명부 전체를 받지 않습니다). 「·」나 띄어쓰기로 바꾸세요.`);
+    if (nm.length > PHOTO.maxName) add("e", `${who}: 이름이 ${PHOTO.maxName}자를 넘습니다.`);
+    if (s.title.trim().length > PHOTO.maxTitle) add("e", `${who}: 직함이 ${PHOTO.maxTitle}자를 넘습니다.`);
+    const key = canonName(nm).toLowerCase();
     if (key && seen.has(key)) add("e", `${who}: 같은 이름이 두 번 있습니다. 폰은 이름으로 명함을 찾으므로 구분이 안 됩니다.`);
     seen.add(key);
     if (PHONE_RE.test(s.name + " " + s.title)) add("e", `${who}: 전화번호는 넣지 않습니다.`);
@@ -748,7 +904,8 @@ function rosterIssues() {
       if (!FILE_RE.test(s.card.file)) add("e", `${who}: 명함 파일 이름이 규칙에 맞지 않습니다.`);
       if (s.card.bytes > PHOTO.maxBytes) add("e", `${who}: 명함이 ${kb(s.card.bytes)} 입니다. 1MB 를 넘으면 폰이 받지 않습니다.`);
       else if (s.card.bytes > PHOTO.warnBytes) add("w", `${who}: 명함이 ${kb(s.card.bytes)} 입니다. 명함 뒤에 회사 사진이 함께 들어가므로 400KB 아래를 권합니다.`);
-      if (!state.staged[s.card.file] && !state.files[s.card.file]) add("e", `${who}: 명함 사진 파일이 배포처에 없습니다. 다시 올리세요.`);
+      if (state.unfetched && state.unfetched.has(s.card.file)) add("e", `${who}: 명함 사진을 배포처에서 받아 오지 못했습니다. 「다시 불러오기」를 누르세요(다시 올리지 마세요).`);
+      else if (!state.staged[s.card.file] && !state.files[s.card.file]) add("e", `${who}: 명함 사진 파일이 배포처에 없습니다. 다시 올리세요.`);
     } else {
       add("w", `${who}: 명함이 없어 회사 사진만 붙습니다.`);
     }
@@ -760,12 +917,18 @@ function rosterIssues() {
     if (!FILE_RE.test(x.file)) add("e", `${who}: 파일 이름이 규칙에 맞지 않습니다.`, "shared");
     if (x.bytes > PHOTO.maxBytes) add("e", `${who}: ${kb(x.bytes)} 입니다. 1MB 를 넘으면 폰이 받지 않습니다.`, "shared");
     else if (x.bytes > PHOTO.warnBytes) add("w", `${who}: ${kb(x.bytes)} 입니다. 400KB 아래를 권합니다.`, "shared");
-    if (!state.staged[x.file] && !state.files[x.file]) add("e", `${who}: 사진 파일이 배포처에 없습니다. 다시 올리세요.`, "shared");
+    if (state.unfetched && state.unfetched.has(x.file)) add("e", `${who}: 사진을 배포처에서 받아 오지 못했습니다. 「다시 불러오기」를 누르세요(다시 올리지 마세요).`, "shared");
+    else if (!state.staged[x.file] && !state.files[x.file]) add("e", `${who}: 사진 파일이 배포처에 없습니다. 다시 올리세요.`, "shared");
   });
   const total = sharedBytes();
   if (total > SHARED.maxBytes) add("e", `회사 사진 합계가 ${kb(total)} 입니다. 명함까지 더하면 통신사 한 통 한도(약 ${kb(SHARED.mmsLimit)})를 넘어 화질이 떨어지거나 뒤쪽 사진이 빠집니다. ${kb(SHARED.maxBytes)} 아래로 줄이거나 한 장을 빼세요.`, "shared");
   else if (total > SHARED.warnBytes) add("w", `회사 사진 합계가 ${kb(total)} 입니다. 명함까지 더하면 통신사 한 통 한도 약 ${kb(SHARED.mmsLimit)} 에 가깝습니다.`, "shared");
   if (!r.shared.length) add("w", "회사 사진이 없습니다. 모든 문자가 명함만 달고 나갑니다.", "shared");
+  // 한 통 = 명함 + 회사 사진 전부. 가장 큰 명함 기준으로 통신사 한 통 한도를 본다.
+  const biggest = r.staff.reduce((n, s) => Math.max(n, s.card ? s.card.bytes || 0 : 0), 0);
+  if (total <= SHARED.maxBytes && biggest + total > SHARED.mmsLimit) {
+    add("w", `가장 큰 명함(${kb(biggest)})까지 더하면 ${kb(biggest + total)} 로 한 통 한도(약 ${kb(SHARED.mmsLimit)})를 넘습니다. 보낼 때마다 폰이 화질을 낮추고, 그래도 넘치면 뒤쪽 회사 사진부터 뺍니다.`, "shared");
+  }
   return issues;
 }
 
@@ -800,7 +963,7 @@ function drawRoster() {
     if (s._new) li.className = "new";
     const img = dataUrl(s.card);
     li.innerHTML = `
-      <div class="thumb">${img ? `<img alt="" src="${img}">` : "명함 없음"}</div>
+      <div class="thumb">${img ? `<img alt="" src="${esc(img)}">` : "명함 없음"}</div>
       <div class="fields"><span class="n">${i + 1}</span>
         <input type="text" data-name="${i}" maxlength="${PHOTO.maxName}" placeholder="이름" value="${esc(s.name)}">
         <input type="text" data-title="${i}" maxlength="${PHOTO.maxTitle}" placeholder="직함" value="${esc(s.title)}"></div>
@@ -810,7 +973,7 @@ function drawRoster() {
         <button class="small danger" data-remove="${i}">직원 삭제</button>
       </div>
       <div class="mv"><button class="small" data-up="${i}">▲</button><button class="small" data-down="${i}">▼</button></div>
-      <div class="meta">${s.card ? `명함 ${kb(s.card.bytes)}${state.staged[s.card.file] ? " · 아직 올리지 않음" : ""}` : "폰 마이페이지에서 이 이름을 고른 직원의 문자에는 회사 사진만 붙습니다"}</div>`;
+      <div class="meta">${s.card ? `명함 ${kb(s.card.bytes)}${state.staged[s.card.file] ? " · 아직 올리지 않음" : ""}` : "마이페이지 이름이 이 이름인 직원의 문자에는 회사 사진만 붙습니다"}</div>`;
     ul.appendChild(li);
   });
   if (!r.staff.length) ul.innerHTML = '<div class="empty">직원이 없습니다. "직원 추가" 를 누르세요.</div>';
@@ -841,7 +1004,7 @@ function drawShared() {
     const img = dataUrl(x);
     const li = document.createElement("li");
     li.innerHTML = `
-      <div class="thumb">${img ? `<img alt="회사 사진 ${i + 1}" src="${img}">` : "사진 파일 없음"}</div>
+      <div class="thumb">${img ? `<img alt="회사 사진 ${i + 1}" src="${esc(img)}">` : "사진 파일 없음"}</div>
       <div class="fields"><span class="n">${i + 1}</span>
         <div><b>문자에서 ${nthPhoto(i + 1)}</b><div class="hint">${kb(x.bytes)}${state.staged[x.file] ? " · 아직 올리지 않음" : ""}</div></div></div>
       <div class="ractions"><button class="small danger" data-shared-remove="${i}">지우기</button></div>
@@ -893,12 +1056,42 @@ function syncStaffFromRoster() {
 }
 
 /** 사진을 브라우저 안에서 줄이고(긴 변 1280px, JPEG) 해시를 계산해 명부 항목을 만든다. 원본은 어디에도 올라가지 않는다. */
+/** JPEG 의 EXIF 회전값(1 = 그대로). 없거나 읽지 못하면 1. */
+function jpegOrientation(u8) {
+  let i = 2;
+  while (i + 9 < u8.length && u8[i] === 0xff) {
+    const marker = u8[i + 1], len = (u8[i + 2] << 8) | u8[i + 3];
+    if (marker === 0xe1 && u8[i + 4] === 0x45 && u8[i + 5] === 0x78 && u8[i + 6] === 0x69 && u8[i + 7] === 0x66) {   // "Exif"
+      const t = i + 10, le = u8[t] === 0x49;
+      const r16 = (o) => (le ? u8[o] | (u8[o + 1] << 8) : (u8[o] << 8) | u8[o + 1]);
+      const r32 = (o) => (le ? (u8[o] | (u8[o + 1] << 8) | (u8[o + 2] << 16) | (u8[o + 3] << 24)) : ((u8[o] << 24) | (u8[o + 1] << 16) | (u8[o + 2] << 8) | u8[o + 3])) >>> 0;
+      const ifd = t + r32(t + 4), n = r16(ifd);
+      for (let k = 0; k < n; k++) { const e = ifd + 2 + k * 12; if (e + 10 <= u8.length && r16(e) === 0x0112) return r16(e + 8); }
+      return 1;
+    }
+    if (marker === 0xda || len < 2) break;   // 영상 데이터 시작 · 깨진 머리
+    i += 2 + len;
+  }
+  return 1;
+}
+
 async function shrinkPhoto(file) {
   if (!file) throw new Error("파일을 고르지 않았습니다.");
   if (!/^image\//.test(file.type)) throw new Error("사진 파일이 아닙니다. JPG·PNG 를 골라 주세요.");
+  if (!crypto.subtle) throw new Error("이 브라우저에서는 사진을 올릴 수 없습니다(보안 연결이 아닙니다).");
   let bmp;
   try { bmp = await createImageBitmap(file, { imageOrientation: "from-image" }); }
   catch (e) { try { bmp = await createImageBitmap(file); } catch (e2) { throw new Error("이 사진은 브라우저가 열지 못합니다(HEIC 등). JPG 로 바꿔서 올려 주세요."); } }
+  // 이미 문자용으로 맞춘 JPEG(긴 변 1280px 이하 · 400KB 이하 · 회전 정보 없음)는 바이트 그대로 올린다 —
+  // 제나 검문본·앱 사진과 해시가 같아야 배포처 raw 해시로 대조할 수 있다.
+  const orig = new Uint8Array(await file.arrayBuffer());
+  if (orig[0] === 0xff && orig[1] === 0xd8 && jpegOrientation(orig) === 1 && Math.max(bmp.width, bmp.height) <= PHOTO.maxSide && orig.byteLength <= PHOTO.warnBytes) {
+    const w0 = bmp.width, h0 = bmp.height;
+    if (bmp.close) bmp.close();
+    const sha0 = [...new Uint8Array(await crypto.subtle.digest("SHA-256", orig))].map((b) => b.toString(16).padStart(2, "0")).join("");
+    const b640 = await new Promise((res, rej) => { const rd = new FileReader(); rd.onload = () => res(String(rd.result).split(",")[1]); rd.onerror = rej; rd.readAsDataURL(file); });
+    return { type: "jpg", bytes: orig.byteLength, sha256: sha0, b64: b640, width: w0, height: h0, kept: true };
+  }
   const scale = Math.min(1, PHOTO.maxSide / Math.max(bmp.width, bmp.height));
   const w = Math.max(1, Math.round(bmp.width * scale)), h = Math.max(1, Math.round(bmp.height * scale));
   const c = document.createElement("canvas"); c.width = w; c.height = h;
@@ -909,7 +1102,6 @@ async function shrinkPhoto(file) {
   const blob = await new Promise((res) => c.toBlob(res, "image/jpeg", PHOTO.quality));
   if (!blob) throw new Error("사진을 변환하지 못했습니다.");
   const buf = await blob.arrayBuffer();
-  if (!crypto.subtle) throw new Error("이 브라우저에서는 사진을 올릴 수 없습니다(보안 연결이 아닙니다).");
   const sha256 = [...new Uint8Array(await crypto.subtle.digest("SHA-256", buf))].map((b) => b.toString(16).padStart(2, "0")).join("");
   const b64 = await new Promise((res, rej) => { const rd = new FileReader(); rd.onload = () => res(String(rd.result).split(",")[1]); rd.onerror = rej; rd.readAsDataURL(blob); });
   return { type: "jpg", bytes: buf.byteLength, sha256, b64, width: w, height: h };
@@ -923,7 +1115,7 @@ function pickPhoto(file, kind, assign) {
     if (!state.files[name]) state.staged[name] = p.b64;
     // assign 이 false 를 돌려주면(같은 사진을 또 넣은 경우) 받는 쪽이 이미 상태줄에 이유를 적었으므로 덮지 않는다.
     if (assign({ file: name, type: p.type, bytes: p.bytes, sha256: p.sha256 }) === false) { pruneStaged(); return; }
-    setStatus(`사진 준비됨 · ${p.width}×${p.height} · ${kb(p.bytes)}`, p.bytes > PHOTO.warnBytes ? "warn" : "ok");
+    setStatus(`사진 준비됨 · ${p.width}×${p.height} · ${kb(p.bytes)}${p.kept ? " · 원본 그대로" : ""}`, p.bytes > PHOTO.warnBytes ? "warn" : "ok");
   }).catch((e) => { setStatus("사진을 넣지 못했습니다", "bad"); showDialog("사진을 넣지 못했습니다", `<p>${esc(e.message)}</p>`); });
 }
 
@@ -1065,11 +1257,13 @@ const githubBackend = {
       body: body ? JSON.stringify(body) : undefined,
       cache: "no-store",
     });
-    if (res.status === 401) throw new Error("열쇠가 맞지 않습니다. 다시 만들어 넣어 주세요.");
-    if (res.status === 403) throw new Error("이 열쇠에는 gist 권한이 없습니다. 열쇠를 만들 때 gist 를 골랐는지 보세요.");
-    if (res.status === 404) throw new Error("배포처를 찾지 못했습니다. 이 열쇠가 배포처 주인의 것인지 보세요.");
-    if (res.status === 422) throw new Error("배포처가 이 변경을 받지 않았습니다(422). 다시 불러온 뒤 다시 해 보세요.");
-    if (!res.ok) throw new Error("GitHub 응답 " + res.status);
+    const fail = (msg, auth) => { const e = new Error(msg); e.status = res.status; e.auth = !!auth; return e; };
+    if (res.status === 401) throw fail("열쇠가 맞지 않습니다. 다시 만들어 넣어 주세요.", true);
+    if (res.status === 403 && res.headers.get("x-ratelimit-remaining") === "0") throw fail("GitHub 요청 한도에 걸렸습니다. 몇 분 뒤 「다시 불러오기」를 누르세요.");
+    if (res.status === 403) throw fail("이 열쇠에는 gist 권한이 없습니다. 열쇠를 만들 때 gist 를 골랐는지 보세요.", true);
+    if (res.status === 404) throw fail("배포처를 찾지 못했습니다. 이 열쇠가 배포처 주인의 것인지 보세요.", true);
+    if (res.status === 422) throw fail("배포처가 이 변경을 받지 않았습니다(422). 다시 불러온 뒤 다시 해 보세요.");
+    if (!res.ok) throw fail("GitHub 응답 " + res.status + ". 잠시 뒤 「다시 불러오기」를 누르세요.");
     this.scopes = (res.headers.get("x-oauth-scopes") || "").split(",").map((v) => v.trim()).filter(Boolean);
     return res.json();
   },
@@ -1086,7 +1280,7 @@ const githubBackend = {
     if (!entry) return null;
     if (!entry.truncated) return entry.content;
     const res = await fetch(entry.raw_url, { cache: "no-store" });
-    if (!res.ok) throw new Error(`사진 파일을 받지 못했습니다 (${res.status})`);
+    if (!res.ok) throw new Error(`배포처 파일 ${name} 을 받지 못했습니다(${res.status}). 잠시 뒤 「다시 불러오기」를 누르세요.`);
     return res.text();
   },
   async load() {
@@ -1100,12 +1294,16 @@ const githubBackend = {
     const wanted = [...(roster.staff || []).filter((s) => s.card && s.card.file).map((s) => s.card.file), ...(roster.shared || []).map((x) => x.file)];
     const files = {};
     const okNames = wanted.filter((name) => FILE_RE.test(name));
-    const texts = await Promise.all(okNames.map((name) => this.fileFull(gist, name)));
-    okNames.forEach((name, i) => { if (texts[i]) files[name] = texts[i].trim(); });
+    const texts = await Promise.all(okNames.map((name) => this.fileFull(gist, name).catch(() => null)));
+    const unfetched = [];
+    okNames.forEach((name, i) => {
+      const t = (texts[i] || "").trim();
+      if (t && /^[A-Za-z0-9+/=\s]+$/.test(t)) files[name] = t; else unfetched.push(name);
+    });
     let version = null;
     try { version = versionText ? JSON.parse(versionText) : null; } catch (e) { /* 없으면 없는 대로 */ }
     return {
-      catalog, staff, roster, files, rosterSupported: true, version,
+      catalog, staff, roster, files, rosterSupported: true, version, unfetched,
       source: templatesText ? `배포처(개정 ${catalog.revision || 0})` : "배포처에 문구가 아직 없습니다",
       canPublish: true,
     };
@@ -1141,6 +1339,8 @@ const githubBackend = {
     const files = { [STAFF_FILE]: { content: JSON.stringify(roster, null, 2) + "\n" } };
     for (const [name, b64] of Object.entries(put)) if (FILE_RE.test(name)) files[name] = { content: b64 };
     for (const name of del) if (FILE_RE.test(name) && gist.files && gist.files[name]) files[name] = null;
+    const keep = new Set([...roster.staff.filter((s) => s.card).map((s) => s.card.file), ...roster.shared.map((x) => x.file)]);
+    for (const name of Object.keys(gist.files || {})) if (FILE_RE.test(name) && !keep.has(name) && !(name in files)) files[name] = null;
     await this.call("PATCH", { files });
     return { ok: true, revision: roster.revision };
   },
@@ -1201,13 +1401,20 @@ async function load() {
   try {
     const result = await backend.load();
     state.name = result.catalog.name || "";
-    state.revision = result.catalog.revision || 0;
+    // 개정 번호는 배포처 값을 그대로 화면에 쓰므로 정수만 받는다(아니면 배포를 잠근다)
+    const rev = Number(result.catalog.revision || 0);
+    state.revisionBad = !(Number.isInteger(rev) && rev >= 0);
+    state.revision = state.revisionBad ? 0 : rev;
     state.templates = (result.catalog.templates || []).map((t) => ({
-      key: t.key, name: t.name, body: t.body, rules: t.rules || [], staff: t.staff || [],
+      key: t.key, name: t.name, body: t.body,
+      rules: (t.rules || []).map((r) => String(r).trim().toLowerCase()), staff: t.staff || [],
     }));
+    // 배포된 규칙·키를 기억한다(규칙을 빼도 폰에서는 안 빠지고, 키를 바꾸면 폰이 다른 문구로 본다)
+    state.publishedRules = Object.fromEntries(state.templates.map((t) => [t.key, [...t.rules]]));
+    state.publishedKeys = new Set(state.templates.map((t) => t.key));
     const n = normalizeRoster(result.roster);
     state.roster = n.roster; state.rosterFormat = n.format;
-    state.files = result.files || {}; state.staged = {};
+    state.files = result.files || {}; state.staged = {}; state.unfetched = new Set(result.unfetched || []);
     state.rosterSupported = result.rosterSupported !== false;
     state.staff = state.rosterSupported && state.roster.staff.length
       ? state.roster.staff.map((s) => ({ name: s.name, title: s.title, hasCard: !!s.card }))
@@ -1220,7 +1427,8 @@ async function load() {
     }
     loadRelease();
   } catch (e) {
-    if (backend.needsToken) { showGate(e.message); return; }
+    // 열쇠 문제일 때만 열쇠 입력 화면으로. 네트워크·한도·파일 받기 실패는 상태줄에 알리고 「다시 불러오기」를 권한다.
+    if (backend.needsToken && (e.auth || !githubBackend.token)) { showGate(e.message); return; }
     setStatus("불러오지 못했습니다: " + e.message, "bad");
   }
   drawAll();
@@ -1246,6 +1454,8 @@ async function publish() {
   const who = state.templates.map((t) => `· ${t.name} → ${(t.staff || []).length ? t.staff.join(", ") : "모든 직원"}`).join("\n");
   const okMsg = `문구 ${state.templates.length}개를 개정 ${state.revision + 1} 로 배포합니다.\n\n${who}\n\n` +
     (warns.length ? `확인할 점 ${warns.length}가지가 있습니다(배포는 됩니다).\n\n` : "") +
+    (state.templates.some((t) => ((state.publishedRules || {})[t.key] || []).some((r) => !(t.rules || []).includes(r)))
+      ? "뺀 자동 규칙은 이미 받은 폰에서 지워지지 않습니다(추천이 그대로일 수 있습니다).\n" : "") +
     "고객에게 나가는 글을 새로 쓰거나 바꿨다면 제나 검문을 거쳤는지 확인하세요.\n" +
     "직원 폰은 앱을 열거나 통화 팝업이 닫힐 때 받아 갑니다(최대 1시간).";
   if (!confirm(okMsg)) return;
@@ -1258,7 +1468,7 @@ async function publish() {
     setStatus(`배포했습니다 · 개정 ${body.revision}`, "ok");
     showDialog("배포했습니다", `<p>개정 <b>${body.revision}</b> 으로 올렸습니다. 문구 ${state.templates.length}개.</p>
       <p>직원 폰은 앱을 열거나 <b>통화 팝업이 닫힐 때</b> 새 문구를 받아 갑니다. 늦어도 1시간 안에 모두 바뀝니다.</p>
-      <p class="hint">지금 바로 확인하려면 폰에서 템플릿 탭 → ⋮ → 「공통 템플릿 지금 받아오기」를 누르세요. 템플릿 탭 맨 위에 개정 <b>${body.revision}</b> 이 보이면 받은 것입니다.</p>`);
+      <p class="hint">지금 바로 확인하려면 폰에서 템플릿 탭 → ⋮ → 「공통 템플릿 지금 받아오기」를 누르세요. 템플릿 탭 맨 위에 「… · r${body.revision}」이 보이면 받은 것입니다.</p>`);
   } catch (e) {
     setStatus("배포하지 못했습니다", "bad");
     showDialog("배포하지 못했습니다", `<pre class="json">${esc(e.message)}</pre>
@@ -1282,17 +1492,20 @@ function download() {
   URL.revokeObjectURL(a.href);
 }
 
-function keyFor(name) {
-  const base = (name || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
-  let k = base || "t";
-  let n = 1;
-  while (state.templates.some((t) => t.key === k)) k = `${base || "t"}_${++n}`;
+function keyFor(prefix) {
+  // 한 번 쓴 키를 다른 문구에 다시 쓰면, 중간 개정을 건너뛴 폰이 새 문구를 옛 문구로 보고 고친 본문을 남긴다.
+  const base = (prefix || "t").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 24) || "t";
+  const stamp = Date.now().toString(36).slice(-6);
+  let k = `${base}_${stamp}`, n = 1;
+  while (state.templates.some((t) => t.key === k)) k = `${base}_${stamp}${++n}`;
   return k;
 }
+/** 이미 배포된 문구의 키(폰이 그 키로 문구를 알아본다)는 바꾸지 못하게 한다. */
+function keyLocked(t) { return !!t && !!state.publishedKeys && state.publishedKeys.has(t.key) && !t._new; }
 
 $("btn-add").onclick = () => {
   state.templates.push({
-    key: keyFor("new"), name: "새 문구", rules: [], staff: [],
+    key: keyFor("t"), name: "새 문구", rules: [], staff: [], _new: true,
     body: "[이룸경영지원센터]\n대표님, 방금 통화드린 {담당자명} {담당자직함}입니다.\n\n\n\n상담시간 10:00~19:00\n{담당자명} {담당자직함}",
   });
   state.sel = state.templates.length - 1;
@@ -1303,7 +1516,9 @@ $("btn-dup").onclick = () => {
   if (!t) return;
   const copy = JSON.parse(JSON.stringify(t));
   copy.name = t.name + " 사본";
-  copy.key = keyFor(t.key + "_copy");
+  copy.key = keyFor(t.key);
+  copy.rules = [];      // 자동 규칙은 한 문구만 맡는다
+  copy._new = true;
   state.templates.splice(state.sel + 1, 0, copy);
   state.sel += 1;
   touch();
@@ -1350,10 +1565,10 @@ $("gate-enter").onclick = async () => {
 $("gate-token").addEventListener("keydown", (e) => { if (e.key === "Enter") $("gate-enter").click(); });
 
 $("btn-token").onclick = () => {
-  if ((state.dirty || state.rosterDirty) && !confirm("고친 내용이 사라집니다. 열쇠를 바꿀까요?")) return;
+  if ((state.dirty || state.rosterDirty) && !confirm("고친 내용이 사라집니다. 이 기기에서 열쇠를 지울까요?")) return;
   forgetToken();
   state.dirty = false; state.rosterDirty = false;
-  showGate("");
+  location.replace(location.pathname + location.hash);   // 불러온 명부·명함이 화면과 메모리에 남지 않게 새로 연다
 };
 
 (async function start() {
