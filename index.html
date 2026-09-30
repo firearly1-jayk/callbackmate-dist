@@ -48,9 +48,9 @@
   .bar .rev { color: var(--muted); font-size: 13px; }
   section.tab { padding-bottom: 40px; }
   main { display: grid; grid-template-columns: 300px minmax(0, 1fr) 340px; gap: 14px; padding: 14px 18px 0; align-items: start; }
-  @media (max-width: 1180px) { main { grid-template-columns: 1fr; } }
-  .wrap { padding: 14px 18px 0; display: grid; gap: 14px; }
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  @media (max-width: 1180px) { main { grid-template-columns: minmax(0, 1fr); } }
+  .wrap { padding: 14px 18px 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; min-width: 0; }
   .panel > h2 { font-size: 13px; margin: 0 0 10px; color: var(--muted); font-weight: 700; letter-spacing: .02em; }
   ul.list { list-style: none; margin: 0; padding: 0; }
   ul.list li {
@@ -136,6 +136,18 @@
   .card .thumbs img { width: auto; height: 96px; max-width: 32%; object-fit: contain; }
   .badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: #fdf3e2; color: #7c4a06; margin-left: 6px; }
 
+  /* 휴대폰 폭: 탭은 옆으로 밀어 보고, 여백과 사진 칸을 줄인다(대표가 폰에서 열 때) */
+  @media (max-width: 640px) {
+    header { padding: 8px 12px; gap: 8px; }
+    nav.tabs { overflow-x: auto; max-width: 100%; }
+    nav.tabs button { padding: 7px 9px; white-space: nowrap; }
+    .bar, .wrap, main { padding-left: 12px; padding-right: 12px; }
+    textarea { min-height: 220px; }
+    ul.roster .thumb { width: 120px; height: 68px; }
+    ul.roster .meta { padding-left: 0; }
+    .glance { grid-template-columns: minmax(0, 1fr); }
+  }
+
   #gate { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 50; }
   .gate-card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px; max-width: 460px; width: 100%; }
   .gate-card h2 { margin: 0 0 6px; font-size: 17px; }
@@ -209,8 +221,9 @@
       <div class="row" style="margin-bottom:8px">
         <select id="prev-staff" style="font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line)"></select>
         <select id="prev-time" style="font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line)">
-          <option value="10">낮에 보낼 때</option>
-          <option value="19">저녁 6시 이후</option>
+          <option value="promise">팝업에서 날짜·시각을 고를 때</option>
+          <option value="10">고르지 않고 18:00 전에 보낼 때</option>
+          <option value="19">고르지 않고 18:00 이후에 보낼 때</option>
         </select>
       </div>
       <div class="phone">
@@ -219,7 +232,7 @@
       <div class="counts" id="counts"></div>
       <ul class="issues" id="issues"></ul>
       <p class="note" id="photo-note">담당자 명함과 회사 사진이 이 글과 함께 한 통으로 나갑니다. 명함에 있는 대표번호·주소·홈페이지는 글에 다시 쓰지 않습니다.</p>
-      <p class="note"><b>어떤 전화에 쓸지</b>를 고른 문구는 그 통화 뒤 팝업에 <b>먼저 뜹니다</b>. 고르지 않은 문구도 팝업 목록에 모두 나오며 직원이 상황에 맞게 고릅니다.</p>
+      <p class="note"><b>어떤 전화에 쓸지</b>를 고른 문구는 그 통화 뒤 팝업 맨 위 「추천」 칸에 뜹니다. 걸려 온 전화 뒤에는 미리 골라져 있고, 내가 건 전화 뒤에는 받았는지 앱이 모르므로 직원이 고릅니다(앱 v0.29.3). 나머지 문구는 이 목록 순서대로 그 아래에 모두 나옵니다.</p>
     </section>
   </main>
 </section>
@@ -301,15 +314,30 @@ const LIMITS = {
   maxTemplates: 50,
 };
 const RULES = [["incoming", "걸려온 전화"], ["outgoing", "내가 건 전화"], ["missed", "부재중"]];
-const VARS = [["{담당자명}", "담당자 이름"], ["{담당자직함}", "직함"], ["{약속시점}", "오늘 안에 / 내일 오전까지"], ["{회사명}", "회사 이름"], ["{담당자연락처}", "담당자 번호"]];
+const VARS = [["{담당자명}", "담당자 이름"], ["{담당자직함}", "직함"], ["{약속시점}", "팝업에서 고른 날짜·시각 (고르지 않으면 오늘 안에 / 다음 영업일 오전까지)"], ["{회사명}", "회사 이름"], ["{담당자연락처}", "담당자 번호"]];
 const BANNED = ["http", "www.", "%"];
+// 제나 금지어(앱 domain/policy/CopyGuard.kt 와 같은 목록 · BuiltInCatalogTest 가 대조한다 · 2026-09-30 JENA D-136).
+// 출처: ai-blog-bot banned_words 27 · 제나 D-062 ④ 6 · D-102 · 이 앱 문구 규칙. COPY_BANNED 는 배포를 막고 COPY_CHECK 는 경고만 한다.
+const COPY_BANNED = ["대출", "100%", "무조건", "누구나 가능", "확정 승인", "반드시 받을 수 있다", "성공보수", "승인률", "승인율", "신청대행", "대신 신청", "받아드립", "받아 드립", "한도를 올려", "한도 올려", "심사위원", "내부 라인", "내부 노하우", "인맥", "정부 지정", "정부지정", "공식 협약", "협약 기관", "공식 파트너", "전액 지원", "즉시 승인", "누적 승인", "공식 인증", "중기부 소속", "정부 공인", "국가 인증", "중기부 지정", "나랏돈", "공인", "한도", "선착순", "오늘 마감", "공식 업체", "공식 컨설팅", "허가 업체", "지금 아니면", "오늘까지만"];
+const COPY_CHECK = ["무료", "정부", "보장", "누구나", "1위", "마감", "전문기관", "전문 기관", "무상"];
+const MAX_AMOUNT = /최대\s*\d[\d,.]*\s*(억|천만|백만|만)/;
+const BRAND = "[이룸경영지원센터]";
 const PHOTO_ONLY = ["1688-0239", "irumbiz.com", "청라커낼로", "사업자등록번호", "브랜드평판", "국가품질만족지수", "소비자만족", "ISO", "이노비즈", "메인비즈"];
 const MONEY = /\d[\d,.]*\s*(억|천만|백만|만|천)?\s*원/;
 const KEY_RE = /^[a-z0-9][a-z0-9_-]*$/;
 const WORST = { name: "남궁민수", title: "수석컨설턴트" };  // 이름+직함 10자, 앱의 경고 상한
-// {약속시점}: 이 시각부터 "내일 오전까지". 앱 TemplateVariables.DEADLINE_CUTOFF_HOUR=18 과 같다(상담시간 10:00~19:00).
+// {약속시점}: 고르지 않는 경로에서 이 시각부터 "다음 영업일 오전까지". 앱 TemplateVariables.DEADLINE_CUTOFF_HOUR=18 과 같다
+// (상담시간 10:00~19:00 · 마감 한 시간 전). 팝업(v0.29~)에서는 직원이 고객과 정한 날짜·시각("10/1(목) 10:00에")이 들어간다.
 const DEADLINE_CUTOFF_HOUR = 18;
-const CHECK_HOURS = [10, 19];  // 낮 / 저녁(상담 마감 직전) 두 판으로 길이를 검사한다
+const DEADLINE_TOMORROW = "다음 영업일 오전까지";
+const CHECK_HOURS = [10, 19];  // 18:00 전 / 18:00 이후(상담 마감 직전) 두 판으로 길이를 검사한다
+// 팝업(v0.29~)에서 직원이 고른 약속 값. 앱 TemplateVariables.promiseText("M/d(요일) HH:mm에") 중 가장 긴 꼴과 보기 값.
+const PROMISE_LONGEST = "12/31(목) 18:30에";
+const PROMISE_SAMPLE = "10/1(목) 10:00에";
+// 앱 BuiltInCatalogTest 와 같은 어조 규칙(부탁·사과·낮춤 · 2026-09-16 대표 평가). 배포는 막지 않고 경고한다.
+const WEAK = ["부탁드", "죄송", "양해", "괜찮으시", "조르지", "번거로우", "실례", "정하셔도 됩니다", "감사합니다", "해 주시면 감사"];
+// 약속 없는 판(개정 17)에 남으면 안 되는 약속 낱말
+const PROMISE_WORDS = ["정리해", "추려", "연락드리", "전화드리겠", "보내드리", "알려드리", "안내하겠", "{약속시점}"];
 
 // ---- 사진·명부 규칙 (docs/ADR-010, domain/images/) ----
 const PHOTO = { maxSide: 1280, quality: 0.85, warnBytes: 400 * 1024, maxBytes: 1024 * 1024, maxStaff: 50, maxName: 20, maxTitle: 20 };
@@ -334,8 +362,8 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const kb = (n) => `${Math.round((n || 0) / 1024)}KB`;
 
-function render(body, staff, hour) {
-  const deadline = hour >= DEADLINE_CUTOFF_HOUR ? "내일 오전까지" : "오늘 안에";
+function render(body, staff, hour, promise) {
+  const deadline = promise || (hour >= DEADLINE_CUTOFF_HOUR ? DEADLINE_TOMORROW : "오늘 안에");
   return body
     .split("{담당자명}").join(staff.name)
     .split("{담당자직함}").join(staff.title)
@@ -383,33 +411,53 @@ function checkTemplate(t, index) {
   if (body.length > LIMITS.maxBody) add("e", `내용이 ${LIMITS.maxBody}자를 넘습니다.`);
 
   const staff = worstStaffFor(t);
-  for (const hour of CHECK_HOURS) {
-    const text = render(body, staff, hour);
-    const when = hour >= DEADLINE_CUTOFF_HOUR ? "저녁" : "낮";
-    if (text.length > LIMITS.maxChars) add("e", `${when}에 보내면 ${text.length}자입니다. ${LIMITS.maxChars}자 이하로 줄이세요.`);
-    if (text.split("\n").length > LIMITS.maxLines) add("e", `${when}에 보내면 ${text.split("\n").length}줄입니다. ${LIMITS.maxLines}줄 이하로 줄이세요.`);
-    if (/[{}]/.test(text)) add("e", "치환되지 않는 중괄호가 있습니다. 변수 이름을 확인하세요.");
+  const variants = [
+    { hour: CHECK_HOURS[0], when: "18:00 전에 보내면" },
+    { hour: CHECK_HOURS[1], when: "18:00 이후에 보내면" },
+    { hour: CHECK_HOURS[0], promise: PROMISE_LONGEST, when: `팝업에서 날짜·시각을 고르면(가장 긴 「${PROMISE_LONGEST}」 기준)` },
+  ];
+  let braces = false;
+  for (const v of variants) {
+    const text = render(body, staff, v.hour, v.promise);
+    if (text.length > LIMITS.maxChars) add("e", `${v.when} ${text.length}자입니다. ${LIMITS.maxChars}자 이하로 줄이세요.`);
+    if (text.split("\n").length > LIMITS.maxLines) add("e", `${v.when} ${text.split("\n").length}줄입니다. ${LIMITS.maxLines}줄 이하로 줄이세요.`);
+    if (/[{}]/.test(text)) braces = true;
   }
+  if (braces) add("e", "치환되지 않는 중괄호가 있습니다. 변수 이름을 확인하세요.");
   // 지금 직원들의 이름은 짧지만, 이름이 긴 직원이 들어오면 같은 문구가 길어진다(앱이 경고하는 상한은 이름+직함 10자).
-  const worstCase = render(body, WORST, CHECK_HOURS[1]);
+  const worstCase = render(body, WORST, CHECK_HOURS[0], PROMISE_LONGEST);
   if ((staff.name + staff.title).length < (WORST.name + WORST.title).length && worstCase.length > LIMITS.maxChars) {
     add("w", `이름이 긴 담당자(${WORST.name} ${WORST.title})가 들어오면 ${worstCase.length}자가 됩니다.`);
   }
   const head = render(body, staff, CHECK_HOURS[1]).slice(0, LIMITS.visibleHead);
   const wantsDeadline = body.includes("{약속시점}");
-  if (wantsDeadline && !head.includes("내일 오전까지")) {
+  if (wantsDeadline && !head.includes(DEADLINE_TOMORROW)) {
     add("w", `언제까지 보내 주겠다는 약속이 앞 ${LIMITS.visibleHead}자 밖에 있습니다. 문자가 접히면 안 보입니다.`);
   }
-  if (!wantsDeadline && !head.includes("문자로") && !head.includes("문자 한")) {
-    add("w", `무엇을 답하면 되는지가 앞 ${LIMITS.visibleHead}자 안에 없습니다.`);
+  // 답장을 청하는 문장은 넣지 않는다(2026-09-30 대표 지시 · 개정 14). 다음 연락은 문자에 적은 약속 시각에 우리가 전화로 한다.
+  if (/답 ?주세요|답장 ?주세요|답 주시면|문자로 주세요/.test(body)) {
+    add("e", "답장을 청하는 문장(\"~ 답 주세요\")은 넣지 않습니다(2026-09-30 대표 지시). 다음 연락은 약속 시각에 전화로 합니다.");
   }
   for (const b of BANNED) if (body.includes(b)) add("e", `"${b}" 는 넣지 않습니다. 정책자금 사칭 문자와 구분이 어려워집니다.`);
   if (MONEY.test(body)) add("e", "금액 숫자는 넣지 않습니다(광고로 분류될 수 있습니다).");
+  // 제나 금지어(검문 없이 전 직원 폰으로 나가지 않게 · JENA D-136)
+  for (const w of COPY_BANNED) if (body.includes(w)) add("e", `"${w}" 는 넣지 않습니다(제나 금지어). 바꾼 문구는 제나 검문을 거쳐 배포하세요.`);
+  for (const w of COPY_CHECK) if (body.includes(w)) add("w", `"${w}" 가 들어 있습니다. 근거가 확인된 표현인지 제나 검문을 받은 뒤 배포하세요.`);
+  if (MAX_AMOUNT.test(body)) add("e", "\"최대 O억\" 같은 금액 약속은 넣지 않습니다(제나 rules/04).");
+  if (!body.startsWith(BRAND)) add("e", `문구는 ${BRAND} 로 시작해야 합니다(저장 안 된 번호의 문자가 사칭 문자와 같은 모양이 되지 않게 · 09-25 검문 C3).`);
   for (const w of PHOTO_ONLY) if (body.includes(w)) add("w", `"${w}" 는 사진에 이미 있습니다. 글에서 빼세요.`);
   if (!body.endsWith("{담당자명} {담당자직함}")) add("w", "마지막 줄을 담당자 서명으로 끝내는 것을 권합니다.");
-  if (!(t.rules || []).length) {
-    add("w", "어떤 전화에 쓸지 고르지 않았습니다. 통화 직후 팝업에서 직원이 손으로 골라 씁니다(상황별 문구는 이것이 정상입니다).");
+  for (const w of WEAK) if (body.includes(w)) add("w", `"${w}" 는 부탁하거나 스스로를 낮추는 말입니다. 알려 드리는 말투로 바꾸는 것을 권합니다.`);
+  if (/[?？]/.test(body)) add("w", "물음표로 묻는 문장이 있습니다. 답을 기다리지 않고 알려 드리는 문장으로 쓰는 것을 권합니다.");
+  if (body.includes("'진행'") || body.includes("‘진행’")) add("e", "\"'진행' 답장\" 처럼 계약 의사를 문자로 받지 않습니다(계약은 미팅에서 · 직원 매뉴얼 4-1).");
+  for (const w of ["되는 것만", "안 되는 건", "소진되면 접수가 마감"]) if (body.includes(w)) add("w", `"${w}" 는 결과나 마감을 단정하는 말입니다(제나 검문 C1). 한정 어미로 바꾸세요.`);
+  if (body.includes("재신청이 막히") && !body.includes("재신청이 막히는 자금도 있어")) add("w", "재신청 제한은 모든 자금에 해당하지 않습니다. \"재신청이 막히는 자금도 있어\" 처럼 한정 어미를 붙이세요.");
+  // 개정 17 규칙: 약속 없는 판에는 약속 문장이 없고, 부재 판은 통화가 있었다고 쓰지 않는다
+  if (name.endsWith("(약속 없음)")) {
+    const left = PROMISE_WORDS.filter((w) => body.includes(w));
+    if (left.length) add("w", `이름은 「약속 없음」인데 약속하는 말(${left.join(", ")})이 들어 있습니다.`);
   }
+  if (name.includes("부재") && /방금 통화|통화드린|말씀하신/.test(body)) add("w", "부재 문구에 통화가 있었다는 말(방금 통화·통화드린·말씀하신)이 있습니다. 받지 않은 분께는 사실과 다릅니다.");
   // 한 통화 유형을 여러 문구가 맡으면 자동으로 골라지는 것이 만든 차례에 따라 정해져 직원이 예측할 수 없다.
   for (const rule of t.rules || []) {
     const rivals = state.templates.filter((o, i) => i !== index && (o.rules || []).includes(rule) && sharesStaff(o, t));
@@ -551,8 +599,9 @@ function drawPreview() {
   if (!t) { $("preview").textContent = ""; $("counts").innerHTML = ""; $("issues").innerHTML = ""; return; }
   const chosen = state.staff.find((s) => s.name === sel.value);
   const staff = chosen || worstStaffFor(t);
-  const hour = Number($("prev-time").value);
-  const text = render((t.body || "").trim(), staff, hour);
+  const pick = $("prev-time").value;
+  const hour = pick === "promise" ? CHECK_HOURS[0] : Number(pick);
+  const text = render((t.body || "").trim(), staff, hour, pick === "promise" ? PROMISE_SAMPLE : undefined);
   const head = text.slice(0, LIMITS.visibleHead), tail = text.slice(LIMITS.visibleHead);
   $("preview").innerHTML = esc(head) + (tail
     ? `<div class="fold">여기부터는 「모두 보기」를 눌러야 보일 수 있습니다</div><span class="tail">${esc(tail)}</span>`
@@ -620,6 +669,7 @@ function drawOverview() {
       <h3>문구</h3>
       <div class="big">개정 ${state.revision}${state.dirty ? '<span class="badge">고치는 중</span>' : ""}</div>
       <div class="sub">문구 ${state.templates.length}개 · 자동으로 먼저 뜨는 문구 ${state.templates.filter((t) => (t.rules || []).length).length}개 · 직원 전용 ${state.templates.filter((t) => (t.staff || []).length).length}개</div>
+      <div class="sub">폰에서 확인: 템플릿 탭 맨 위 「개정 ${state.revision}」</div>
       <div class="row"><button class="small" data-go="templates">문구 고치기</button></div>
     </div>
     <div class="card">
@@ -920,7 +970,7 @@ async function saveRoster() {
     setStatus(`반영했습니다 · 명부 개정 ${state.roster.revision}`, "ok");
     showDialog("직원 폰에 반영합니다", `<p>명부 개정 <b>${state.roster.revision}</b> 으로 올렸습니다. 직원 ${roster.staff.length}명, 회사 사진 ${roster.shared.length}장.</p>
       <p>앱 <b>v0.26 이상</b>인 폰은 앱을 열거나 통화 팝업이 닫힐 때 새 사진을 받아 갑니다. 늦어도 1시간.</p>
-      <p class="hint">지금 바로 확인하려면 폰 설정 화면의 "공통 문구·사진 지금 확인" 을 누르세요.</p>`);
+      <p class="hint">지금 바로 확인하려면 폰에서 설정 → 공통 템플릿 → 「지금 받아오기」를 누르세요.</p>`);
   } catch (e) {
     setStatus("반영하지 못했습니다", "bad");
     showDialog("반영하지 못했습니다", `<pre class="json">${esc(e.message)}</pre>
@@ -1061,7 +1111,22 @@ const githubBackend = {
     };
   },
   async publish(body) {
-    await this.call("PATCH", { files: { [TEMPLATES_FILE]: { content: JSON.stringify(body, null, 2) + "\n" } } });
+    // 그 사이 다른 데서(스크립트·다른 창) 문구를 올렸으면 덮어쓰지 않는다. 같은 개정 번호를 두 번 쓰면
+    // 이미 그 번호를 받은 폰은 두 번째 내용을 무시한다(폰은 가진 것보다 큰 개정만 적용).
+    const gist = await this.call("GET");
+    const currentText = await this.fileFull(gist, TEMPLATES_FILE);
+    let currentRev = 0;
+    try { currentRev = currentText ? (Number(JSON.parse(currentText).revision) || 0) : 0; } catch (e) { currentRev = 0; }
+    if (body.revision !== currentRev + 1) {
+      throw new Error(`배포처의 문구가 그 사이 바뀌었습니다(지금 개정 ${currentRev}). 고친 내용은 「파일로 내려받기」로 저장해 두고, 「다시 불러오기」를 누른 뒤 다시 고치세요.`);
+    }
+    const content = JSON.stringify(body, null, 2) + "\n";
+    const after = await this.call("PATCH", { files: { [TEMPLATES_FILE]: { content } } });
+    // 올라간 내용이 보낸 것과 같은지 확인한다(잘려 오면 raw 주소로 다시 받는다).
+    const saved = await this.fileFull(after, TEMPLATES_FILE);
+    if (saved === null || saved.trim() !== content.trim()) {
+      throw new Error("배포처에 올라간 내용이 보낸 것과 다릅니다. 「다시 불러오기」로 확인하세요.");
+    }
     return `배포처(개정 ${body.revision})`;
   },
   async saveRoster({ roster, put, delete: del }) {
@@ -1181,6 +1246,7 @@ async function publish() {
   const who = state.templates.map((t) => `· ${t.name} → ${(t.staff || []).length ? t.staff.join(", ") : "모든 직원"}`).join("\n");
   const okMsg = `문구 ${state.templates.length}개를 개정 ${state.revision + 1} 로 배포합니다.\n\n${who}\n\n` +
     (warns.length ? `확인할 점 ${warns.length}가지가 있습니다(배포는 됩니다).\n\n` : "") +
+    "고객에게 나가는 글을 새로 쓰거나 바꿨다면 제나 검문을 거쳤는지 확인하세요.\n" +
     "직원 폰은 앱을 열거나 통화 팝업이 닫힐 때 받아 갑니다(최대 1시간).";
   if (!confirm(okMsg)) return;
   setStatus("배포 중…", "busy");
@@ -1192,7 +1258,7 @@ async function publish() {
     setStatus(`배포했습니다 · 개정 ${body.revision}`, "ok");
     showDialog("배포했습니다", `<p>개정 <b>${body.revision}</b> 으로 올렸습니다. 문구 ${state.templates.length}개.</p>
       <p>직원 폰은 앱을 열거나 <b>통화 팝업이 닫힐 때</b> 새 문구를 받아 갑니다. 늦어도 1시간 안에 모두 바뀝니다.</p>
-      <p class="hint">지금 바로 확인하려면 폰에서 템플릿 탭 → ⋮ → "공통 템플릿 지금 받아오기" 를 누르세요.</p>`);
+      <p class="hint">지금 바로 확인하려면 폰에서 템플릿 탭 → ⋮ → 「공통 템플릿 지금 받아오기」를 누르세요. 템플릿 탭 맨 위에 개정 <b>${body.revision}</b> 이 보이면 받은 것입니다.</p>`);
   } catch (e) {
     setStatus("배포하지 못했습니다", "bad");
     showDialog("배포하지 못했습니다", `<pre class="json">${esc(e.message)}</pre>
@@ -1227,7 +1293,7 @@ function keyFor(name) {
 $("btn-add").onclick = () => {
   state.templates.push({
     key: keyFor("new"), name: "새 문구", rules: [], staff: [],
-    body: "대표님, 방금 통화드린 이룸경영지원센터 {담당자명} {담당자직함}입니다.\n\n\n\n{담당자명} {담당자직함}",
+    body: "[이룸경영지원센터]\n대표님, 방금 통화드린 {담당자명} {담당자직함}입니다.\n\n\n\n상담시간 10:00~19:00\n{담당자명} {담당자직함}",
   });
   state.sel = state.templates.length - 1;
   touch();
