@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src https://gist.githubusercontent.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: 'self'; connect-src https://gist.githubusercontent.com; base-uri 'none'; form-action 'none'">
 <meta name="robots" content="noindex">
 <title>콜백메이트 새 디자인</title>
 <!--
   콜백메이트 앱 v0.30.0 새 디자인 미리보기(시안) — 현황판(index.html)과 같은 곳에 올린다(scripts/publish-console.sh).
-  화면 시안은 docs/ADR-012 의 토큰(현황판과 같은 결)으로 그린다. 템플릿·팝업의 문구는 배포처 templates.json 을 그때 읽어(읽기만) 넣는다 —
-  대표가 현황판에서 문구를 바꾸면 이 페이지도 따라 바뀐다. 번호는 모두 가린 예시(010-****-0177)이고 직원 이름은 넣지 않는다.
+  위: 실제 앱 화면 사진(design-shots/ · 시험용 에뮬레이터에서 찍고 번호는 가렸다 — 올리기 전에 사람이 눈으로 확인한다).
+  아래: docs/ADR-012 의 토큰(현황판과 같은 결)으로 그린 시안. 템플릿·팝업의 문구는 배포처 templates.json 을 그때 읽어(읽기만) 넣는다 —
+  대표가 현황판에서 문구를 바꾸면 시안도 따라 바뀐다. 번호는 모두 가린 예시(010-****-0177)이고 직원 이름은 넣지 않는다.
 -->
 <style>
 /* 페이지 = 현황판과 같은 토큰 · 폰 시안 = 앱 v0.30.0 토큰(.phone[data-mode]) */
@@ -74,6 +75,13 @@ main{max-width:1480px; margin:0 auto; padding:0 16px 56px}
 .status::before{content:""; position:absolute; left:11px; top:50%; width:7px; height:7px; margin-top:-3.5px; border-radius:50%; background:currentColor}
 .status.ok{background:var(--ok-tint); color:var(--ok)}
 .status.warn{background:var(--warn-tint); color:var(--warn)}
+.real{display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:22px 16px; margin-top:16px}
+.real figure{margin:0; display:flex; flex-direction:column; align-items:center; gap:10px; min-width:0}
+.real figcaption{font-size:13px; font-weight:600; color:var(--text-2); letter-spacing:.01em}
+.real img{display:block; width:100%; max-width:300px; height:auto; aspect-ratio:9/20; border-radius:26px; border:1px solid var(--line); box-shadow:var(--shadow); background:var(--surface)}
+.real[data-mode="light"] img.d, .real[data-mode="dark"] img.l{display:none}
+.sub{margin:34px 6px 0; font-size:20px; line-height:1.2; font-weight:700; letter-spacing:-.02em}
+.sub + .note{margin:6px 6px 0}
 .phones{display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:22px 16px; margin-top:16px}
 .shot{display:flex; flex-direction:column; align-items:center; gap:10px; min-width:0}
 .shot h3{margin:0; font-size:13px; font-weight:600; color:var(--text-2); letter-spacing:.01em}
@@ -212,8 +220,8 @@ main{max-width:1480px; margin:0 auto; padding:0 16px 56px}
 </header>
 <main>
   <div class="bar">
-    <h2>앱 v0.30.0 화면 시안</h2>
-    <p>현황판과 같은 결로 바뀌는 직원 폰 앱 화면입니다. 화면 순서·단추 이름·통화 뒤 팝업이 뜨는 방식은 그대로이고, 색과 모양만 바뀝니다.</p>
+    <h2>앱 v0.30.0 새 디자인</h2>
+    <p>현황판과 같은 결로 바뀐 직원 폰 앱 화면입니다. 화면 순서·단추 이름·통화 뒤 팝업이 뜨는 방식은 그대로이고, 색과 모양만 바뀝니다.</p>
   </div>
   <div class="controls">
     <div class="seg" role="group" aria-label="폰 화면 밝기">
@@ -223,7 +231,40 @@ main{max-width:1480px; margin:0 auto; padding:0 16px 56px}
     <span class="status" id="live">현황판 문구를 불러오는 중…</span>
   </div>
 
-  <section class="phones" id="phones" data-mode="light" aria-label="화면 시안">
+  <h2 class="sub" id="real-title">실제 앱 화면</h2>
+  <p class="note">v0.30.0 을 시험용 에뮬레이터에 깔아 찍은 사진입니다. 시계·이력·번호는 시험 값이고 번호는 가렸습니다.
+    시험 폰이라 테스트 모드가 켜져 있어 홈에 빨간 안내가 보이고, 담당자 이름을 넣지 않아 문구의 이름 자리가 비어 보입니다
+    (직원 폰은 세팅 때 테스트 모드를 끄고 마이페이지에 이름을 넣습니다).</p>
+  <section class="real" id="real" data-mode="light" aria-labelledby="real-title">
+    <figure><figcaption>홈</figcaption>
+      <img class="l" src="design-shots/light-home.jpg" alt="홈 화면(밝게)" width="540" height="1200" loading="lazy" decoding="async">
+      <img class="d" src="design-shots/dark-home.jpg" alt="홈 화면(어둡게)" width="540" height="1200" loading="lazy" decoding="async">
+    </figure>
+    <figure><figcaption>템플릿</figcaption>
+      <img class="l" src="design-shots/light-templates.jpg" alt="템플릿 화면(밝게)" width="540" height="1200" loading="lazy" decoding="async">
+      <img class="d" src="design-shots/dark-templates.jpg" alt="템플릿 화면(어둡게)" width="540" height="1200" loading="lazy" decoding="async">
+    </figure>
+    <figure><figcaption>규칙</figcaption>
+      <img class="l" src="design-shots/light-rules.jpg" alt="규칙 화면(밝게)" width="540" height="1200" loading="lazy" decoding="async">
+      <img class="d" src="design-shots/dark-rules.jpg" alt="규칙 화면(어둡게)" width="540" height="1200" loading="lazy" decoding="async">
+    </figure>
+    <figure><figcaption>이력</figcaption>
+      <img class="l" src="design-shots/light-history.jpg" alt="이력 화면(밝게)" width="540" height="1200" loading="lazy" decoding="async">
+      <img class="d" src="design-shots/dark-history.jpg" alt="이력 화면(어둡게)" width="540" height="1200" loading="lazy" decoding="async">
+    </figure>
+    <figure><figcaption>설정</figcaption>
+      <img class="l" src="design-shots/light-settings.jpg" alt="설정 화면(밝게)" width="540" height="1200" loading="lazy" decoding="async">
+      <img class="d" src="design-shots/dark-settings.jpg" alt="설정 화면(어둡게)" width="540" height="1200" loading="lazy" decoding="async">
+    </figure>
+    <figure><figcaption>통화 뒤 팝업</figcaption>
+      <img class="l" src="design-shots/light-popup.jpg" alt="통화 뒤 팝업 화면(밝게)" width="540" height="1200" loading="lazy" decoding="async">
+      <img class="d" src="design-shots/dark-popup.jpg" alt="통화 뒤 팝업 화면(어둡게)" width="540" height="1200" loading="lazy" decoding="async">
+    </figure>
+  </section>
+
+  <h2 class="sub" id="mock-title">현황판 지금 문구로 그린 시안</h2>
+  <p class="note">현황판에 올라간 지금 문구를 불러와 그립니다 — 현황판에서 문구를 바꾸면 여기도 바로 바뀝니다.</p>
+  <section class="phones" id="phones" data-mode="light" aria-labelledby="mock-title">
     <!-- 홈 -->
     <div class="shot"><h3>홈</h3>
       <div class="phone"><div class="screen glow">
@@ -343,8 +384,7 @@ main{max-width:1480px; margin:0 auto; padding:0 16px 56px}
       <li><b>그대로인 것:</b> 화면 순서, 메뉴 위치, 단추 이름. 교육 자료와 안내 문구가 그대로 맞습니다.</li>
       <li><b>성능:</b> 흐림 효과는 넣지 않습니다(A24·A37 에서 버벅임 없게). 글꼴은 폰 기본 글꼴입니다.</li>
     </ul>
-    <p class="note">시안입니다. 번호는 모두 가린 예시입니다. 실제 앱 화면 사진은 v0.30.0 을 빌드한 뒤 이 페이지에 붙입니다.
-      템플릿과 팝업의 문구는 현황판에 올라간 지금 문구를 그대로 불러와 보여 줍니다.</p>
+    <p class="note">번호는 모두 가렸습니다. 실제 앱 화면 사진은 시험용 에뮬레이터에서 찍었고, 시안의 문구는 현황판에 올라간 지금 문구를 그대로 불러와 보여 줍니다.</p>
   </section>
 </main>
 <script>
@@ -415,8 +455,10 @@ main{max-width:1480px; margin:0 auto; padding:0 16px 56px}
 
   // 폰 시안 밝게/어둡게(페이지 자체는 컴퓨터 설정을 따른다)
   const phones = $("phones");
+  const real = $("real");
   const setMode = (mode) => {
     phones.dataset.mode = mode;
+    real.dataset.mode = mode;
     $("mode-light").setAttribute("aria-pressed", String(mode === "light"));
     $("mode-dark").setAttribute("aria-pressed", String(mode === "dark"));
     try { localStorage.setItem("cbm-design-mode", mode); } catch (e) { /* 저장 못 해도 화면은 그대로 */ }
