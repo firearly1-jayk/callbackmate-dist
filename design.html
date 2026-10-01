@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src https://gist.githubusercontent.com; base-uri 'none'; form-action 'none'">
+<meta name="robots" content="noindex">
+<title>콜백메이트 새 디자인</title>
+<!--
+  콜백메이트 앱 v0.30.0 새 디자인 미리보기(시안) — 현황판(index.html)과 같은 곳에 올린다(scripts/publish-console.sh).
+  화면 시안은 docs/ADR-012 의 토큰(현황판과 같은 결)으로 그린다. 템플릿·팝업의 문구는 배포처 templates.json 을 그때 읽어(읽기만) 넣는다 —
+  대표가 현황판에서 문구를 바꾸면 이 페이지도 따라 바뀐다. 번호는 모두 가린 예시(010-****-0177)이고 직원 이름은 넣지 않는다.
+-->
+<style>
+/* 페이지 = 현황판과 같은 토큰 · 폰 시안 = 앱 v0.30.0 토큰(.phone[data-mode]) */
+:root{
+  color-scheme: light dark;
+  --accent:#F26522; --accent-tint:rgba(242,101,34,.12);
+  --bg:#F2F2F7; --surface:#FFFFFF; --surface-2:#F7F7FA;
+  --fill:rgba(120,120,128,.12); --glass:rgba(255,255,255,.72); --glass-line:rgba(0,0,0,.08);
+  --text:#1D1D1F; --text-2:#6E6E73; --text-3:#8E8E93; --line:rgba(60,60,67,.14);
+  --ok:#248A3D; --ok-tint:rgba(52,199,89,.14); --warn:#B25000; --warn-tint:rgba(255,159,10,.16);
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.06);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI Variable Text","Segoe UI","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --accent:#FF7A3D; --accent-tint:rgba(255,122,61,.18);
+    --bg:#000000; --surface:#1C1C1E; --surface-2:#232326;
+    --fill:rgba(120,120,128,.24); --glass:rgba(28,28,30,.72); --glass-line:rgba(255,255,255,.10);
+    --text:#F5F5F7; --text-2:#A1A1A6; --line:rgba(84,84,88,.55);
+    --ok:#30D158; --ok-tint:rgba(48,209,88,.18); --warn:#FFB340; --warn-tint:rgba(255,159,10,.20);
+    --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.35);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font:15px/1.55 var(--font); letter-spacing:-.005em; color:var(--text); background:var(--bg);
+  -webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(1200px 600px at 12% -10%, rgba(242,101,34,.10), transparent 60%),radial-gradient(900px 500px at 100% 0%, rgba(90,120,255,.08), transparent 60%);
+  background-attachment:fixed;
+}
+a{color:inherit}
+header{
+  position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:12px;
+  padding:10px max(16px, env(safe-area-inset-left)); padding-top:calc(10px + env(safe-area-inset-top, 0px));
+  background:var(--glass); -webkit-backdrop-filter:saturate(180%) blur(22px); backdrop-filter:saturate(180%) blur(22px);
+  border-bottom:1px solid var(--glass-line);
+}
+.mark{
+  width:30px; height:30px; border-radius:9px; display:grid; place-items:center; flex:none;
+  color:#fff; font-weight:800; font-size:14px;
+  background:linear-gradient(145deg,#FF8A4C,#F26522 55%,#D4431A);
+  box-shadow:0 2px 8px rgba(242,101,34,.35), inset 0 1px 0 rgba(255,255,255,.35);
+}
+header h1{margin:0; font-size:16px; font-weight:700; letter-spacing:-.02em}
+header .sp{flex:1}
+.pill{
+  display:inline-flex; align-items:center; gap:6px; border:0; border-radius:999px; text-decoration:none;
+  padding:8px 16px; font:600 14px/1.2 var(--font); background:var(--fill); color:var(--text); cursor:pointer;
+}
+.pill.small{padding:5px 12px; font-size:13px}
+.pill:focus-visible{outline:3px solid rgba(242,101,34,.35); outline-offset:2px}
+main{max-width:1480px; margin:0 auto; padding:0 16px 56px}
+.bar{padding:24px 6px 4px}
+.bar h2{margin:0; font-size:28px; line-height:1.15; font-weight:700; letter-spacing:-.025em; text-wrap:balance}
+.bar p{margin:6px 0 0; color:var(--text-2); font-size:13.5px}
+.controls{display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; margin:16px 6px 4px}
+.seg{display:inline-flex; gap:2px; padding:3px; border-radius:999px; background:var(--fill)}
+.seg button{border:0; background:transparent; color:var(--text-2); font:600 14px/1.2 var(--font); padding:6px 15px; border-radius:999px; cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface); color:var(--text); box-shadow:0 1px 3px rgba(0,0,0,.12),0 1px 1px rgba(0,0,0,.04)}
+.status{font-size:12.5px; font-weight:600; padding:6px 12px 6px 24px; border-radius:999px; position:relative; background:var(--fill); color:var(--text-2)}
+.status::before{content:""; position:absolute; left:11px; top:50%; width:7px; height:7px; margin-top:-3.5px; border-radius:50%; background:currentColor}
+.status.ok{background:var(--ok-tint); color:var(--ok)}
+.status.warn{background:var(--warn-tint); color:var(--warn)}
+.phones{display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:22px 16px; margin-top:16px}
+.shot{display:flex; flex-direction:column; align-items:center; gap:10px; min-width:0}
+.shot h3{margin:0; font-size:13px; font-weight:600; color:var(--text-2); letter-spacing:.01em}
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:22px; padding:18px; box-shadow:var(--shadow); margin-top:22px}
+.panel h2{margin:0 0 10px; font-size:13px; font-weight:600; color:var(--text-2); letter-spacing:.01em}
+.panel ul{margin:0; padding-left:18px}
+.panel li{margin:4px 0}
+.note{color:var(--text-2); font-size:12.5px; line-height:1.6; margin:10px 0 0}
+
+/* ── 폰 시안(앱 v0.30.0 토큰) ── */
+.phone{
+  --a:#F26522; --a-text:#C2410C; --on-a:#FFFFFF; --a-tint:rgba(242,101,34,.12); --a-solid:#FDEDE4;
+  --p-bg:#F2F2F7; --p-surface:#FFFFFF; --p-surface2:#F7F7FA; --p-elev:#FFFFFF;
+  --p-fill:rgba(120,120,128,.12); --p-fill2:rgba(120,120,128,.18); --p-thumb:#FFFFFF;
+  --p-text:#1D1D1F; --p-text2:#6E6E73; --p-text3:#8E8E93; --p-line:rgba(60,60,67,.14);
+  --p-glass:rgba(255,255,255,.94); --p-glass-line:rgba(0,0,0,.08);
+  --p-ok:#1F7A36; --p-ok-t:#E3F7E8; --p-warn:#B25000; --p-warn-t:#FFF0D8; --p-bad:#D70015; --p-bad-t:#FFE7E6;
+  --p-bubble:#E9E9EB; --p-device:#F2F2F7;
+  --p-shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.06);
+  width:min(320px, 100%); aspect-ratio:320/690; border-radius:42px; padding:9px; position:relative;
+  background:#1d1d1f; box-shadow:0 24px 60px rgba(0,0,0,.18), inset 0 0 0 1px rgba(255,255,255,.08);
+}
+.phones[data-mode="dark"] .phone{
+  --a:#FF7A3D; --a-text:#FF7A3D; --on-a:#1D1D1F; --a-tint:rgba(255,122,61,.18); --a-solid:#452D24;
+  --p-bg:#000000; --p-surface:#1C1C1E; --p-surface2:#232326; --p-elev:#2C2C2E;
+  --p-fill:rgba(120,120,128,.24); --p-fill2:rgba(120,120,128,.32); --p-thumb:#636366;
+  --p-text:#F5F5F7; --p-text2:#A1A1A6; --p-line:rgba(84,84,88,.55);
+  --p-glass:rgba(28,28,30,.94); --p-glass-line:rgba(255,255,255,.10);
+  --p-ok:#30D158; --p-ok-t:#203D28; --p-warn:#FFB340; --p-warn-t:#49361A; --p-bad:#FF6961; --p-bad-t:#492424;
+  --p-bubble:#3A3A3C; --p-device:#0F0F10;
+  --p-shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.35);
+}
+.screen{
+  position:relative; width:100%; height:100%; border-radius:34px; overflow:hidden;
+  background:var(--p-bg); color:var(--p-text); font-family:var(--font); font-size:13px; line-height:1.5;
+  display:flex; flex-direction:column;
+}
+.screen.glow{background-image:radial-gradient(420px 300px at 12% -60px, color-mix(in srgb, var(--a) 12%, transparent), transparent 70%),radial-gradient(300px 220px at 100% 0, rgba(90,120,255,.08), transparent 70%)}
+.sb{display:flex; justify-content:space-between; align-items:center; padding:12px 22px 4px; font-size:12px; font-weight:600}
+.sb i{display:inline-block; width:15px; height:9px; border-radius:2px; border:1.5px solid currentColor; opacity:.85; margin-left:5px}
+.body{flex:1; overflow:hidden; padding:0 12px 92px}
+.lt{display:flex; align-items:center; gap:9px; padding:14px 4px 10px}
+.lt h4{margin:0; font-size:23px; line-height:1.15; font-weight:700; letter-spacing:-.025em}
+.lt .mark{width:26px; height:26px; border-radius:8px; font-size:12px}
+.lt .act{margin-left:auto; color:var(--p-text2); font-size:12px; font-weight:600}
+.lt .more{margin-left:auto; width:30px; height:30px; border-radius:50%; background:var(--p-fill); display:grid; place-items:center; color:var(--p-text2); font-weight:800; letter-spacing:1px}
+.card{background:var(--p-surface); border:1px solid var(--p-line); border-radius:16px; padding:12px; margin-bottom:10px; box-shadow:var(--p-shadow)}
+.card.bad{background:var(--p-bad-t); border-color:color-mix(in srgb, var(--p-bad) 25%, transparent); box-shadow:none}
+.card.accent{background:var(--a-solid); border-color:color-mix(in srgb, var(--a) 25%, transparent); box-shadow:none}
+.card .t{font-size:13.5px; font-weight:600; margin:0 0 4px}
+.card.bad .t{color:var(--p-bad)}
+.card.accent .t{color:var(--a-text)}
+.card .h{font-size:11px; font-weight:600; color:var(--p-text2); letter-spacing:.01em; margin:0 0 6px}
+.card p{margin:0; font-size:12px; color:var(--p-text2)}
+.btn{display:flex; align-items:center; justify-content:center; border-radius:999px; font-weight:600; font-size:12.5px; padding:8px 12px; min-height:34px; margin-top:8px; background:var(--p-fill); color:var(--p-text)}
+.btn.pri{background:var(--a); color:var(--on-a)}
+.btn.lg{min-height:42px; font-size:14px; font-weight:700}
+.btn.plain{background:transparent; color:var(--p-text2)}
+.btn.tint{background:var(--a-tint); color:var(--a-text); display:inline-flex; margin:0; min-height:26px; padding:4px 10px; font-size:11px}
+.btn.sm{display:inline-flex; margin:0; min-height:26px; padding:4px 10px; font-size:11px}
+.sec{font-size:11px; font-weight:600; color:var(--p-text2); letter-spacing:.01em; margin:12px 6px 6px}
+.group{background:var(--p-surface); border:1px solid var(--p-line); border-radius:16px; overflow:hidden; margin-bottom:10px}
+.row{display:flex; align-items:center; gap:10px; padding:10px 12px; min-height:44px}
+.row + .row{border-top:1px solid var(--p-line)}
+.row .m{flex:1; min-width:0}
+.row .m b{display:block; font-size:12.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.row .m span{display:block; font-size:11px; color:var(--p-text2)}
+.row .m .ex{display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-top:2px}
+.chev{color:var(--p-text3); font-size:14px}
+.row .m .badge{display:inline-block}
+.badge{display:inline-block; font-size:9.5px; font-weight:600; padding:1px 7px; border-radius:999px; background:var(--a-tint); color:var(--a-text); margin-left:4px; vertical-align:1px}
+.sw{width:34px; height:20px; border-radius:999px; background:var(--p-fill2); position:relative; flex:none}
+.sw::after{content:""; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.sw.on{background:var(--a)}
+.sw.on::after{left:16px}
+.spill{display:inline-block; font-size:10px; font-weight:600; padding:3px 9px 3px 18px; border-radius:999px; position:relative}
+.spill::before{content:""; position:absolute; left:8px; top:50%; width:5px; height:5px; margin-top:-2.5px; border-radius:50%; background:currentColor}
+.spill.ok{background:var(--p-ok-t); color:var(--p-ok)}
+.spill.warn{background:var(--p-warn-t); color:var(--p-warn)}
+.spill.busy{background:var(--p-fill); color:var(--p-text2)}
+.tile{background:var(--p-surface2); border:1px solid var(--p-line); border-radius:16px; padding:10px 12px; margin-bottom:8px}
+.tile .top{display:flex; align-items:center; gap:8px}
+.tile .top .tm{margin-left:auto; font-size:10.5px; color:var(--p-text2); font-variant-numeric:tabular-nums}
+.tile .ln{font-size:11.5px; margin-top:4px}
+.tile .rs{font-size:10.5px; color:var(--p-text2)}
+.tabbar{
+  position:absolute; left:10px; right:10px; bottom:12px; height:54px; border-radius:999px;
+  background:var(--p-glass); border:1px solid var(--p-glass-line); box-shadow:0 8px 24px rgba(0,0,0,.12);
+  display:flex; align-items:center; justify-content:space-around; padding:0 6px;
+}
+.tab{display:flex; flex-direction:column; align-items:center; gap:2px; font-size:9.5px; font-weight:600; color:var(--p-text2); padding:5px 9px; border-radius:999px; min-width:44px}
+.tab.on{background:var(--p-fill); color:var(--p-text)}
+.tab svg{width:17px; height:17px; fill:currentColor}
+/* 팝업 */
+.dialer{position:absolute; inset:0; background:linear-gradient(180deg,#2b3340,#11151b)}
+.dialer .who{position:absolute; top:120px; width:100%; text-align:center; color:#fff; opacity:.85; font-size:18px; font-weight:600}
+.scrim{position:absolute; inset:0; background:rgba(0,0,0,.60)}
+.pcard{
+  position:absolute; left:12px; right:12px; top:34px; bottom:14px; overflow:hidden;
+  background:var(--p-surface); border:1px solid var(--p-glass-line); border-radius:22px; padding:14px 14px 12px;
+  box-shadow:0 12px 32px rgba(0,0,0,.35); display:flex; flex-direction:column;
+}
+.ph{display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:600}
+.ph .dot{width:8px; height:8px; border-radius:50%; background:var(--a)}
+.ph .x{margin-left:auto; width:26px; height:26px; border-radius:50%; background:var(--p-fill); display:grid; place-items:center; color:var(--p-text2); font-size:13px}
+.num{font-size:22px; font-weight:700; letter-spacing:-.02em; color:var(--a-text); font-variant-numeric:tabular-nums; margin-top:6px}
+.ct{font-size:11px; color:var(--p-text2)}
+.opts{background:var(--p-surface2); border:1px solid var(--p-line); border-radius:14px; overflow:hidden; margin-top:8px}
+.opt{display:flex; align-items:center; gap:8px; padding:8px 10px; font-size:12px; font-weight:600; position:relative}
+.opt + .opt{border-top:1px solid var(--p-line)}
+.opt .rd{width:15px; height:15px; border-radius:50%; border:1.5px solid var(--p-text3); flex:none}
+.opt.sel{background:var(--a-tint)}
+.opt.sel::before{content:""; position:absolute; left:0; top:7px; bottom:7px; width:3px; border-radius:0 3px 3px 0; background:var(--a)}
+.opt.sel .rd{border-color:var(--a); background:radial-gradient(circle, var(--a) 0 4px, transparent 4.5px)}
+.device{background:var(--p-device); border:1px solid var(--p-line); border-radius:16px; padding:8px 10px 10px; margin-top:8px; flex:1; min-height:0; display:flex; flex-direction:column}
+.device .cap{text-align:center; font-size:9.5px; font-weight:500; color:var(--p-text3); margin-bottom:6px}
+.bubble{
+  align-self:flex-start; max-width:94%; background:var(--p-bubble); color:var(--p-text);
+  border-radius:16px 16px 16px 5px; padding:8px 10px; font-size:11px; line-height:1.55; white-space:pre-wrap; overflow:hidden;
+  -webkit-mask-image:linear-gradient(180deg,#000 75%,transparent); mask-image:linear-gradient(180deg,#000 75%,transparent); flex:1; min-height:0;
+}
+.ver{text-align:center; font-size:9.5px; color:var(--p-text2); margin-top:4px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+@media (max-width:640px){
+  .bar h2{font-size:24px}
+  .phones{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="mark" aria-hidden="true">이</div>
+  <h1>콜백메이트 새 디자인</h1>
+  <span class="sp"></span>
+  <a class="pill small" href="./">현황판으로</a>
+</header>
+<main>
+  <div class="bar">
+    <h2>앱 v0.30.0 화면 시안</h2>
+    <p>현황판과 같은 결로 바뀌는 직원 폰 앱 화면입니다. 화면 순서·단추 이름·통화 뒤 팝업이 뜨는 방식은 그대로이고, 색과 모양만 바뀝니다.</p>
+  </div>
+  <div class="controls">
+    <div class="seg" role="group" aria-label="폰 화면 밝기">
+      <button type="button" id="mode-light" aria-pressed="true">밝게</button>
+      <button type="button" id="mode-dark" aria-pressed="false">어둡게</button>
+    </div>
+    <span class="status" id="live">현황판 문구를 불러오는 중…</span>
+  </div>
+
+  <section class="phones" id="phones" data-mode="light" aria-label="화면 시안">
+    <!-- 홈 -->
+    <div class="shot"><h3>홈</h3>
+      <div class="phone"><div class="screen glow">
+        <div class="sb"><span>10:24</span><span><i></i></span></div>
+        <div class="body">
+          <div class="lt"><div class="mark" aria-hidden="true">이</div><h4>CallbackMate</h4></div>
+          <div class="card bad">
+            <p class="t">통화 뒤 팝업이 뜨지 않는 상태입니다</p>
+            <p>테스트 모드가 켜져 있어 고객에게 문자가 나가지 않습니다.</p>
+            <div class="btn pri">한 번에 켜기</div>
+            <div class="btn">진단 보기</div>
+          </div>
+          <div class="card">
+            <p class="h">현재 상태</p>
+            <p>자동 발송 켜짐 · 테스트 모드 꺼짐</p>
+            <p>발송 방식: 팝업 확인 후 발송</p>
+            <p style="display:flex;align-items:center;gap:6px">보내는 번호: 010-****-1234 <span class="btn sm">바꾸기</span></p>
+          </div>
+          <div class="sec">확인 대기 2건</div>
+          <div class="group">
+            <div class="row"><div class="m"><b>010-****-0177</b><span>수신 · 14:05</span></div><span class="btn tint">확인하고 보내기</span></div>
+            <div class="row"><div class="m"><b>010-****-0421</b><span>발신 · 13:52</span></div><span class="btn tint">확인하고 보내기</span></div>
+          </div>
+        </div>
+        <nav class="tabbar" aria-hidden="true" data-on="0"></nav>
+      </div></div>
+    </div>
+
+    <!-- 템플릿 -->
+    <div class="shot"><h3>템플릿 (중앙 관리)</h3>
+      <div class="phone"><div class="screen glow">
+        <div class="sb"><span>10:24</span><span><i></i></span></div>
+        <div class="body">
+          <div class="lt"><h4>템플릿</h4><span class="more">···</span></div>
+          <div class="card accent">
+            <p class="t">회사 공통 문구 · 중앙 관리</p>
+            <p>문구는 회사 현황판에서만 바꿉니다. 이 폰에서는 고치거나 지울 수 없고, 바뀐 문구는 자동으로 들어옵니다.</p>
+          </div>
+          <div class="sec" id="tpl-label">공통 문구</div>
+          <div class="group" id="tpl-list"></div>
+        </div>
+        <nav class="tabbar" aria-hidden="true" data-on="1"></nav>
+      </div></div>
+    </div>
+
+    <!-- 팝업 -->
+    <div class="shot"><h3>통화 뒤 팝업</h3>
+      <div class="phone"><div class="screen">
+        <div class="dialer"><div class="who">통화 종료</div></div>
+        <div class="scrim"></div>
+        <div class="pcard">
+          <div class="ph"><span class="dot"></span>통화가 끝났습니다<span class="x" aria-hidden="true">✕</span></div>
+          <div class="num">010-****-0177</div>
+          <div class="ct">14:05 · 받은 전화 · 5초</div>
+          <div class="opts" id="pop-opts"></div>
+          <div class="device"><div class="cap">문자 메시지</div><div class="bubble" id="pop-bubble"></div></div>
+          <div class="btn pri lg">문자 보내기</div>
+          <div class="btn">나중에 보내기</div>
+          <div class="btn plain" style="margin-top:2px">이번에는 보내지 않기</div>
+          <div class="ver">v0.30.0</div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- 이력 -->
+    <div class="shot"><h3>이력</h3>
+      <div class="phone"><div class="screen glow">
+        <div class="sb"><span>10:24</span><span><i></i></span></div>
+        <div class="body">
+          <div class="lt"><h4>이력</h4></div>
+          <div class="tile"><div class="top"><span class="spill ok">발송됨</span><span class="tm">10-02 14:06</span></div>
+            <div class="ln">010-****-0177 · 받은 전화</div><div class="rs" id="hist-tpl">통화 후 안내</div></div>
+          <div class="tile"><div class="top"><span class="spill warn">확인 대기</span><span class="tm">10-02 13:52</span></div>
+            <div class="ln">010-****-0421 · 건 전화</div><div style="margin-top:6px"><span class="btn tint">확인하고 보내기</span></div></div>
+          <div class="tile"><div class="top"><span class="spill busy">건너뜀</span><span class="tm">10-01 21:14</span></div>
+            <div class="ln">010-****-0388 · 받은 전화</div><div class="rs">사유: 21:00~08:00 에는 보내지 않음(회사 방침)</div></div>
+          <div class="tile"><div class="top"><span class="spill ok">발송됨</span><span class="tm">10-01 16:40</span></div>
+            <div class="ln">010-****-0912 · 건 전화</div><div class="rs" id="hist-tpl2">통화 후 안내</div></div>
+        </div>
+        <nav class="tabbar" aria-hidden="true" data-on="3"></nav>
+      </div></div>
+    </div>
+
+    <!-- 설정 -->
+    <div class="shot"><h3>설정</h3>
+      <div class="phone"><div class="screen glow">
+        <div class="sb"><span>10:24</span><span><i></i></span></div>
+        <div class="body">
+          <div class="lt"><h4>설정</h4><span class="act">v0.30.0</span></div>
+          <div class="sec">보내기</div>
+          <div class="group">
+            <div class="row"><div class="m"><b>자동 발송</b><span>통화가 끝나면 문구를 고르는 팝업을 띄웁니다</span></div><span class="sw on"></span></div>
+            <div class="row"><div class="m"><b>사진 붙이기</b><span>회사 사진과 내 명함</span></div><span class="sw on"></span></div>
+          </div>
+          <div class="sec">누구에게 보낼지</div>
+          <div class="group">
+            <div class="row"><div class="m"><b>테스트 모드</b><span>켜면 테스트 번호에만 보냅니다</span></div><span class="sw"></span></div>
+            <div class="row"><div class="m"><b>제외·허용 번호</b></div><span class="chev">›</span></div>
+          </div>
+          <div class="sec">공통 템플릿</div>
+          <div class="group">
+            <div class="row"><div class="m"><b>중앙 관리 켬</b><span>문구와 규칙은 현황판에서만 바뀝니다</span></div></div>
+            <div class="row"><div class="m"><b id="set-rev">최신 상태</b><span>1시간마다, 앱을 열 때 확인</span></div><span class="btn sm">지금 받아오기</span></div>
+          </div>
+        </div>
+        <nav class="tabbar" aria-hidden="true" data-on="4"></nav>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="what">
+    <h2 id="what">무엇이 바뀌나</h2>
+    <ul>
+      <li><b>색:</b> 네이비·크림 → 현황판과 같은 주황과 회색 바탕. 폰이 어두운 화면이면 앱도 어둡게 바뀝니다.</li>
+      <li><b>모양:</b> 둥근 카드, 알약 모양 단추, 묶음 목록. 아래 탭은 떠 있는 알약 모양입니다(위치·이름·순서는 그대로).</li>
+      <li><b>통화 뒤 팝업:</b> 색과 모양만 바뀝니다. 뜨는 방식, 단추 순서와 이름, 뜬 뒤 1.5초 보호, 바깥을 눌러도 안 닫히는 것은 그대로입니다.</li>
+      <li><b>그대로인 것:</b> 화면 순서, 메뉴 위치, 단추 이름. 교육 자료와 안내 문구가 그대로 맞습니다.</li>
+      <li><b>성능:</b> 흐림 효과는 넣지 않습니다(A24·A37 에서 버벅임 없게). 글꼴은 폰 기본 글꼴입니다.</li>
+    </ul>
+    <p class="note">시안입니다. 번호는 모두 가린 예시입니다. 실제 앱 화면 사진은 v0.30.0 을 빌드한 뒤 이 페이지에 붙입니다.
+      템플릿과 팝업의 문구는 현황판에 올라간 지금 문구를 그대로 불러와 보여 줍니다.</p>
+  </section>
+</main>
+<script>
+"use strict";
+(function () {
+  const CATALOG = "https://gist.githubusercontent.com/firearly1-jayk/cd91dda6443ffb827d7f9a69740e0b35/raw/templates.json";
+  const SAMPLE = {
+    revision: 19, name: "이룸경영지원센터 공통 문구", managed: true,
+    templates: [
+      { key: "no_answer", name: "부재중 안내 (회사 소개)", body: "[이룸경영지원센터]\n안녕하세요, {담당자명} {담당자직함}입니다.\n…(현황판 문구를 불러오지 못해 예시로 보여 줍니다)", rules: [] },
+      { key: "after_call", name: "통화 후 안내 (회사 소개)", body: "[이룸경영지원센터]\n통화한 {담당자명} {담당자직함}입니다.\n…(현황판 문구를 불러오지 못해 예시로 보여 줍니다)", rules: ["incoming", "outgoing"] },
+    ],
+  };
+  // 앱의 TemplateVariables 와 같은 변수만 예시 값으로 채운다(실제 직원 이름·번호는 넣지 않는다)
+  const VARS = { "{담당자명}": "담당자", "{담당자연락처}": "010-****-****", "{담당자직함}": "직함", "{회사명}": "이룸경영지원센터", "{약속시점}": "내일 오전까지" };
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const render = (body) => Object.keys(VARS).reduce((t, k) => t.split(k).join(VARS[k]), String(body || ""));
+  const hhmm = () => { const d = new Date(); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
+
+  // 아래 탭(홈·템플릿·규칙·이력·설정) — 이름·순서는 앱 그대로
+  const TABS = [
+    ["홈", "M12 3 3 10.5V21h6v-6h6v6h6V10.5z"],
+    ["템플릿", "M6 2h9l5 5v15H6zM14 3v5h5M9 12h8M9 16h8"],
+    ["규칙", "M3 5h11v2.2H3zM3 10.9h11v2.2H3zM3 16.8h7v2.2H3zM14.2 16.4l1.6-1.6 1.9 1.9 3.9-3.9 1.6 1.6-5.5 5.5z"],
+    ["이력", "M12 4a8 8 0 1 1-7.4 5H2l3.5-3.5L9 9H6.8A6 6 0 1 0 12 6zM11 8h2v5l4 2-1 1.7-5-2.7z"],
+    ["설정", "M12 8.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zM10.5 2h3l.5 2.6 2 .9 2.2-1.5 2.1 2.1-1.5 2.2.9 2 2.6.5v3l-2.6.5-.9 2 1.5 2.2-2.1 2.1-2.2-1.5-2 .9-.5 2.6h-3l-.5-2.6-2-.9-2.2 1.5-2.1-2.1 1.5-2.2-.9-2L2 13.5v-3l2.6-.5.9-2L4 5.8 6.1 3.7 8.3 5.2l2-.9z"],
+  ];
+  document.querySelectorAll(".tabbar").forEach((bar) => {
+    const on = Number(bar.dataset.on);
+    bar.innerHTML = TABS.map(([label, d], i) =>
+      `<span class="tab${i === on ? " on" : ""}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>${label}</span>`).join("");
+  });
+
+  function fill(catalog, live) {
+    const ts = Array.isArray(catalog.templates) ? catalog.templates : [];
+    $("tpl-label").textContent = `${catalog.name || "공통 문구"} · r${catalog.revision}`;
+    $("tpl-list").innerHTML = ts.map((t) =>
+      `<div class="row"><div class="m"><b>${esc(t.name)}<span class="badge">공통</span></b>` +
+      `<span class="ex">${esc(render(t.body).replace(/\s+/g, " "))}</span>` +
+      `<span>글자 ${String(t.body || "").length}</span></div><span class="chev">›</span></div>`).join("");
+    // 팝업: 받은 전화 규칙이 달린 문구를 추천(규칙에 맞는 템플릿)으로 고른다 — 앱과 같은 순서(배열 순서)
+    const pick = Math.max(0, ts.findIndex((t) => (t.rules || []).includes("incoming")));
+    $("pop-opts").innerHTML = ts.map((t, i) =>
+      `<div class="opt${i === pick ? " sel" : ""}"><span class="rd"></span>${esc(t.name)}</div>`).join("");
+    $("pop-bubble").textContent = ts[pick] ? render(ts[pick].body) : "";
+    const name = ts[pick] ? ts[pick].name : "통화 후 안내";
+    $("hist-tpl").textContent = name;
+    $("hist-tpl2").textContent = name;
+    $("set-rev").textContent = `최신 상태 (개정 ${catalog.revision})`;
+    const st = $("live");
+    if (live) {
+      st.className = "status ok";
+      st.textContent = `현황판 지금 문구(개정 ${catalog.revision}${catalog.managed === true ? " · 중앙 관리 켬" : ""})를 불러와 보여 줍니다 · ${hhmm()}`;
+    } else {
+      st.className = "status warn";
+      st.textContent = "현황판 문구를 불러오지 못해 예시 문구로 보여 줍니다(새로 고침으로 다시 시도)";
+    }
+  }
+
+  fill(SAMPLE, false);
+  $("live").className = "status";
+  $("live").textContent = "현황판 문구를 불러오는 중…";
+  fetch(CATALOG + "?t=" + Date.now(), { cache: "no-store" })
+    .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+    .then((c) => { if (!c || !Array.isArray(c.templates) || !c.templates.length) throw new Error("empty"); fill(c, true); })
+    .catch(() => fill(SAMPLE, false));
+
+  // 폰 시안 밝게/어둡게(페이지 자체는 컴퓨터 설정을 따른다)
+  const phones = $("phones");
+  const setMode = (mode) => {
+    phones.dataset.mode = mode;
+    $("mode-light").setAttribute("aria-pressed", String(mode === "light"));
+    $("mode-dark").setAttribute("aria-pressed", String(mode === "dark"));
+    try { localStorage.setItem("cbm-design-mode", mode); } catch (e) { /* 저장 못 해도 화면은 그대로 */ }
+  };
+  $("mode-light").addEventListener("click", () => setMode("light"));
+  $("mode-dark").addEventListener("click", () => setMode("dark"));
+  let saved = null;
+  try { saved = localStorage.getItem("cbm-design-mode"); } catch (e) { saved = null; }
+  // 주소 끝 #dark · #light 로 바로 열 수 있다(링크로 보내기 좋게)
+  if (location.hash === "#dark" || location.hash === "#light") saved = location.hash.slice(1);
+  setMode(saved === "dark" || (!saved && window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light");
+})();
+</script>
+</body>
+</html>
