@@ -292,7 +292,7 @@
 <!-- ───────── 문구 ───────── -->
 <section class="tab" id="tab-templates" hidden>
   <div class="bar">
-    <div class="titles"><h2 class="page">문구</h2><span class="rev" id="revline">불러오는 중…</span></div>
+    <div class="titles"><h2 class="page">문구</h2><span class="rev" id="revline">불러오는 중…</span><span class="rev" id="managedline"></span></div>
     <span class="spacer"></span>
     <button id="btn-download">파일로 내려받기</button>
     <button class="primary" id="btn-publish">직원 폰에 배포하기</button>
@@ -478,6 +478,10 @@ const WEAK = ["부탁드", "죄송", "양해", "괜찮으시", "조르지", "번
 // 약속 없는 판(「(약속 없음)」 · 개정 17에서 생김)에 남으면 안 되는 약속 낱말
 // (앱 BuiltInCatalogTest 「약속 없는 판에는 추천·정리·다시 연락 약속과 약속 시점이 없다」와 같은 목록)
 const PROMISE_WORDS = ["정리해", "추려", "골라", "추천", "검토해", "연락드리", "전화드리겠", "보내드리", "알려드리", "안내하겠", "목록", "확인하신", "접수 가능한 자금", "{약속시점}"];
+// 중앙 관리(앱 v0.29.5 · 2026-10-02 대표 「앞으로는 내가 모두 템플릿을 중앙에서 제어」). 이 화면이 올리는 templates.json 에는
+// 언제나 "managed": true 가 name 바로 뒤에 들어간다(payload) — 끄는 스위치는 두지 않는다. v0.29.5 이상 폰은 이 묶음과 똑같이
+// 맞추고(직원 수정 덮어쓰기 · 폰 전용 문구와 문구 사진 정리 · 규칙은 rules 그대로 켜짐·항상) 템플릿·규칙 고치기를 잠근다. 옛 앱은 무시한다.
+const MANAGED_LINE = "중앙 관리: 켬 — 직원 폰에서 문구·규칙을 고칠 수 없음(앱 v0.29.5부터)";
 
 // ---- 사진·명부 규칙 (docs/ADR-010, domain/images/) ----
 const PHOTO = { maxSide: 1280, quality: 0.85, warnBytes: 400 * 1024, maxBytes: 1024 * 1024, maxStaff: 50, maxName: 20, maxTitle: 20 };
@@ -495,6 +499,8 @@ const UNSAFE_TEXT = /[\/\\:\u0000-\u001f\u007f-\u009f]/;
 
 let state = {
   name: "", revision: 0, templates: [], staff: [], sel: 0, dirty: false, source: "", canPublish: true,
+  // 불러온 개정이 이미 중앙 관리(managed: true)인가. 아니면(개정 18 까지) 다음 배포부터 켜진다고 알린다.
+  managed: false,
   // 명부·사진(staff.json 형식 2). files 는 배포처에 있는 사진(base64), staged 는 아직 안 올린 새 사진.
   roster: { format: 2, revision: 0, staff: [], shared: [] }, rosterFormat: 0, files: {}, staged: {}, rosterDirty: false, rosterSupported: true,
   version: null, release: null,
@@ -651,10 +657,11 @@ function checkTemplate(t, index) {
       add("e", `"${RULE_NAMES[rule] || rule}" 을 ${rivals.map((r) => r.name).join(", ")} 도 맡고 있습니다. 자동으로 먼저 뜰 문구는 하나만 정하세요.`);
     }
   }
-  // 앱은 카탈로그의 규칙을 「없으면 만들기」로만 다룬다. 배포된 규칙을 빼도 이미 받은 폰에는 남는다.
+  // v0.29.4 까지의 앱은 카탈로그의 규칙을 「없으면 만들기」로만 다룬다. 배포된 규칙을 빼도 그 폰에는 남는다
+  // (중앙 관리를 아는 v0.29.5 부터는 rules 그대로 맞춰 빠진다). 옛 판 폰이 남아 있을 수 있으므로 경고는 그대로 둔다.
   const dropped = ((state.publishedRules || {})[t.key] || []).filter((r) => !(t.rules || []).includes(r));
   if (dropped.length) {
-    add("w", `「${dropped.map((r) => RULE_NAMES[r] || r).join(", ")}」 규칙을 뺐지만, 이미 받은 폰에서는 지워지지 않아 추천이 바뀌지 않습니다(앱은 규칙을 더하기만 합니다).`);
+    add("w", `「${dropped.map((r) => RULE_NAMES[r] || r).join(", ")}」 규칙을 뺐습니다. 앱 v0.29.5 이상 폰에서는 빠지지만, 그 아래 판 폰에서는 지워지지 않아 추천이 그대로입니다(옛 앱은 규칙을 더하기만 합니다).`);
   }
   const missingStaff = (t.staff || []).filter((n) => !state.staff.some((s) => sameName(s.name, n)));
   if (missingStaff.length && missingStaff.length === (t.staff || []).length) add("e", "받는 직원으로 고른 사람이 직원 명부에 없습니다.");
@@ -833,6 +840,8 @@ function drawPreview() {
 function drawTemplatesBar() {
   $("revline").textContent = `${state.name || "이름 없는 묶음"} · 개정 ${state.revision}${state.dirty ? " · 고친 내용 있음" : ""}` +
     (state.source ? ` · ${state.source}` : "");
+  $("managedline").textContent = MANAGED_LINE +
+    (state.managed ? "" : ` · 개정 ${state.revision} 은 아직 중앙 관리 전, 다음 배포(개정 ${state.revision + 1})부터`);
   const errors = allIssues().filter((x) => x.level === "e").length + (state.revisionBad ? 1 : 0);
   $("btn-publish").disabled = errors > 0 || !state.templates.length || !state.canPublish;
   const whole = catalogIssues().concat(state.revisionBad ? [{ level: "e", text: "배포처 개정 번호가 숫자가 아닙니다. 「다시 불러오기」 뒤에도 그러면 배포하지 말고 알려 주세요." }] : []);
@@ -1481,6 +1490,7 @@ async function load() {
       ? state.roster.staff.map((s) => ({ name: s.name, title: s.title, hasCard: !!s.card }))
       : result.staff;
     state.version = result.version || null;
+    state.managed = result.catalog.managed === true;
     state.sel = 0; state.dirty = false; state.rosterDirty = false; state.source = result.source; state.canPublish = result.canPublish;
     setStatus("불러왔습니다", "ok");
     if (backend === githubBackend && (githubBackend.scopes || []).some((s) => s !== "gist")) {
@@ -1500,6 +1510,8 @@ function payload() {
     format: 1,
     revision: state.revision + 1,
     name: state.name || "이룸경영지원센터 공통 문구",
+    // 중앙 관리는 언제나 켠다(MANAGED_LINE 주석). 자리는 name 바로 뒤 — 배포 스크립트용 개정 파일과 바이트까지 같게 둔다.
+    managed: true,
     templates: state.templates.map((t) => {
       const o = { key: t.key, name: (t.name || "").trim(), body: (t.body || "").trim(), rules: t.rules || [] };
       if ((t.staff || []).length) o.staff = t.staff;
@@ -1515,8 +1527,10 @@ async function publish() {
   const who = state.templates.map((t) => `· ${t.name} → ${(t.staff || []).length ? t.staff.join(", ") : "모든 직원"}`).join("\n");
   const okMsg = `문구 ${state.templates.length}개를 개정 ${state.revision + 1} 로 배포합니다.\n\n${who}\n\n` +
     (warns.length ? `확인할 점 ${warns.length}가지가 있습니다(배포는 됩니다).\n\n` : "") +
+    // 중앙 관리가 처음 켜지는 배포(불러온 개정에 managed 가 없을 때)에만 무엇이 정리되는지 알린다
+    (state.managed ? "" : "이번 배포부터 중앙 관리가 켜집니다. 앱 v0.29.5 이상 폰은 이 목록과 똑같이 맞춰지고(직원이 고친 문구·폰에서만 만든 문구·문구에 붙인 사진은 정리) 직원은 문구·규칙을 고칠 수 없습니다.\n\n") +
     (state.templates.some((t) => ((state.publishedRules || {})[t.key] || []).some((r) => !(t.rules || []).includes(r)))
-      ? "뺀 자동 규칙은 이미 받은 폰에서 지워지지 않습니다(추천이 그대로일 수 있습니다).\n" : "") +
+      ? "뺀 자동 규칙은 앱 v0.29.5 아래 폰에서는 지워지지 않습니다(추천이 그대로일 수 있습니다).\n" : "") +
     "고객에게 나가는 글을 새로 쓰거나 바꿨다면 제나 검문을 거쳤는지 확인하세요.\n" +
     "직원 폰은 앱을 열거나 통화 팝업이 닫힐 때 받아 갑니다(최대 1시간).";
   if (!confirm(okMsg)) return;
@@ -1525,7 +1539,7 @@ async function publish() {
   try {
     const body = payload();
     const source = await backend.publish(body);
-    state.revision = body.revision; state.dirty = false; state.source = source || state.source;
+    state.revision = body.revision; state.dirty = false; state.source = source || state.source; state.managed = body.managed === true;
     setStatus(`배포했습니다 · 개정 ${body.revision}`, "ok");
     showDialog("배포했습니다", `<p>개정 <b>${body.revision}</b> 으로 올렸습니다. 문구 ${state.templates.length}개.</p>
       <p>직원 폰은 앱을 열거나 <b>통화 팝업이 닫힐 때</b> 새 문구를 받아 갑니다. 늦어도 1시간 안에 모두 바뀝니다.</p>
@@ -1586,7 +1600,7 @@ $("btn-dup").onclick = () => {
 };
 $("btn-del").onclick = () => {
   const t = state.templates[state.sel];
-  if (!t || !confirm(`"${t.name}" 문구를 지웁니다. 배포하면 직원 폰에서도 사라집니다(직원이 고친 것은 그 폰에만 남습니다).`)) return;
+  if (!t || !confirm(`"${t.name}" 문구를 지웁니다. 배포하면 직원 폰에서도 사라집니다(앱 v0.29.5 아래 폰에서는 직원이 고친 것만 그 폰에 남습니다).`)) return;
   state.templates.splice(state.sel, 1);
   state.sel = Math.max(0, state.sel - 1);
   touch();
