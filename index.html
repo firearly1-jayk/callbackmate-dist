@@ -69,19 +69,20 @@
   nav.tabs button .dot { display: none; position: absolute; top: 5px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
   nav.tabs button.dirty .dot { display: block; }
 
-  /* 버튼 */
-  button, label.filebtn {
+  /* 버튼 (a.btn = 다른 쪽으로 가는 작은 알약 링크 · 작은 버튼과 같은 모양) */
+  button, label.filebtn, a.btn {
     font: inherit; font-size: 14px; font-weight: 600; border: 0; background: var(--fill); color: var(--text);
     border-radius: 999px; padding: 8px 16px; cursor: pointer; line-height: 1.2; transition: background .15s ease, transform .1s ease, opacity .15s ease;
   }
-  button:hover, label.filebtn:hover { background: var(--fill-2); }
-  button:active { transform: scale(.98); }
-  button:focus-visible, label.filebtn:focus-within, .chip:focus-visible { outline: 3px solid var(--accent-line); outline-offset: 2px; }
+  a.btn { display: inline-block; text-decoration: none; white-space: nowrap; }
+  button:hover, label.filebtn:hover, a.btn:hover { background: var(--fill-2); }
+  button:active, a.btn:active { transform: scale(.98); }
+  button:focus-visible, label.filebtn:focus-within, .chip:focus-visible, a.btn:focus-visible { outline: 3px solid var(--accent-line); outline-offset: 2px; }
   button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
   button.primary { background: var(--accent); color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 4px 14px rgba(242,101,34,.28); }
   button.primary:hover { background: var(--accent-strong); }
   button.primary:disabled { background: var(--fill-2); color: var(--text-2); box-shadow: none; opacity: 1; }
-  button.small, label.filebtn { padding: 5px 12px; font-size: 13px; }
+  button.small, label.filebtn, a.btn { padding: 5px 12px; font-size: 13px; }
   button.danger { color: var(--bad); }
   button.danger:hover { background: var(--bad-tint); }
   label.filebtn { display: inline-block; }
@@ -217,6 +218,24 @@
   .card .thumbs img { width: auto; height: 96px; max-width: 32%; object-fit: contain; }
   .badge { display: inline-block; vertical-align: middle; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--warn-tint); color: var(--warn); margin-left: 6px; letter-spacing: 0; }
 
+  /* 기능(보기만 하는 묶인 목록 — 줄마다 하는 일 · 지금 값 · 고치는 곳) */
+  .feat-wrap { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  @media (max-width: 1180px) { .feat-wrap { grid-template-columns: minmax(0, 1fr); } }
+  .feat-col { display: grid; gap: 16px; align-content: start; min-width: 0; }
+  .feat-span { grid-column: 1 / -1; }
+  .feat-wrap > .issues { margin: 0; }
+  ul.feat { list-style: none; margin: 0; padding: 0; border-radius: var(--r-lg); overflow: hidden; background: var(--surface-2); border: 1px solid var(--line); }
+  ul.feat li { display: flex; align-items: flex-start; gap: 12px; padding: 11px 14px; }
+  ul.feat li + li { border-top: 1px solid var(--line); }
+  ul.feat .t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  ul.feat .t > b { font-weight: 600; font-size: 14.5px; letter-spacing: -0.01em; }
+  ul.feat .t > span { font-size: 12.5px; color: var(--text-2); line-height: 1.55; }
+  ul.feat .t > .now { color: var(--text); font-size: 13px; }
+  ul.feat .t > .where b { font-weight: 600; color: var(--text); }
+  ul.feat .t .row { margin-top: 4px; }
+  ul.feat .val { flex: none; font-size: 13.5px; font-weight: 600; color: var(--text-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  ul.feat .status { flex: none; margin-top: -4px; }
+
   /* 열쇠 넣기 */
   #gate { position: fixed; inset: 0; background: var(--bg-tint), var(--bg); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 50; }
   .gate-card { background: var(--surface); border: 1px solid var(--line); border-radius: 26px; padding: 28px; max-width: 460px; width: 100%; box-shadow: var(--shadow-lg); }
@@ -242,6 +261,7 @@
     ul.roster .thumb { width: 120px; height: 68px; }
     ul.roster .meta { padding-left: 0; }
     .glance { grid-template-columns: minmax(0, 1fr); }
+    ul.feat li { padding: 10px 12px; gap: 10px; }
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
@@ -257,11 +277,13 @@
     <button data-tab="templates">문구<i class="dot"></i></button>
     <button data-tab="staff">직원·명함<i class="dot"></i></button>
     <button data-tab="shared">회사 사진<i class="dot"></i></button>
+    <button data-tab="features">기능</button>
   </nav>
   <span class="spacer"></span>
   <span class="status busy" id="status">시작</span>
   <button id="btn-reload" class="small">다시 불러오기</button>
   <button id="btn-token" class="small" hidden>열쇠 바꾸기</button>
+  <a class="btn" id="lnk-design" href="design.html" title="앱 새 디자인 미리보기(같은 곳의 design.html)">새 디자인</a>
 </header>
 
 <!-- ───────── 현황 ───────── -->
@@ -284,6 +306,7 @@
         <li>폰은 아무것도 되돌려 보내지 않습니다(어느 폰이 어디까지 받았는지는 여기서 알 수 없습니다). 확인은 그 폰의 템플릿 탭 맨 위와 설정 화면에서.</li>
         <li>새 직원: 여기서 이름·직함·명함을 넣고 → 폰에 앱을 깔고 → 폰 마이페이지 이름칸에 <b>이 명부와 같은 이름</b>(띄어쓰기 무관)과 직함을 넣어 저장하면 그 명함이 붙습니다. 전화번호는 이 화면에 넣지 않습니다.</li>
         <li>문자 속 담당자 이름·직함·번호는 <b>각 폰 마이페이지 값</b>입니다. 여기서 이름·직함을 바꾸면 그 직원 폰의 마이페이지도 같게 고쳐 저장하세요(폰은 스스로 바꾸지 않습니다).</li>
+        <li>앱이 하는 일·회사 방침·폰마다 정하는 것은 <b>「기능」 탭</b>에 지금 값과 고치는 곳을 함께 모아 두었습니다.</li>
       </ul>
     </div>
   </div>
@@ -371,6 +394,47 @@
       <ul class="issues" id="shared-issues"></ul>
       <p class="note">명함이 첫 장, 여기 사진들이 순서대로 뒤에 붙습니다. 회사 사진은 3장까지(명함까지 한 통에 4장). 장수와 용량이 늘수록 받는 폰에서 스크롤이 길어지고 한 통 용량 한도(약 900KB)에 가까워집니다.</p>
       <p class="note">언론보도·수상 실적·인증처럼 <b>회사가 어떤 곳인지</b> 보여 주는 사진을 두세요. 용량이 넘치면 앱이 먼저 화질을 낮추고, 그래도 넘치면 <b>뒤에서부터</b> 뺍니다(명함은 남습니다).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── 기능(보기만 함) ───────── -->
+<section class="tab" id="tab-features" hidden>
+  <div class="bar">
+    <div class="titles"><h2 class="page">기능</h2><span class="rev">앱이 하는 일 · 지금 값 · 고치는 곳 — 이 탭은 보기만 합니다</span></div>
+  </div>
+  <div class="wrap feat-wrap">
+    <ul class="issues feat-span" id="ft-issues"></ul>
+    <div class="feat-col">
+      <div class="panel">
+        <h2>통화 뒤 팝업 <span class="hint">· 배포된 문구의 규칙 그대로 — 앱 v0.29.5부터 모든 폰이 똑같이 맞춥니다</span></h2>
+        <ul class="feat" id="ft-rules"></ul>
+        <p class="note" id="ft-rules-note"></p>
+      </div>
+      <div class="panel">
+        <h2>직원 폰이 받아 가는 것 <span class="hint">· 배포처에 올라가 있는 지금 값</span></h2>
+        <ul class="feat" id="ft-dist"></ul>
+      </div>
+      <div class="panel">
+        <h2>회사 방침 <span class="hint">· 앱에 박혀 있어 웹·폰 어디서도 바꿀 수 없습니다</span></h2>
+        <ul class="feat" id="ft-policy"></ul>
+      </div>
+    </div>
+    <div class="feat-col">
+      <div class="panel">
+        <h2>폰마다 정하는 것 <span class="hint">· 이 화면에는 보이지 않습니다 · 값은 앱을 처음 깔았을 때</span></h2>
+        <ul class="feat" id="ft-phone"></ul>
+        <p class="note">바꾸는 곳은 그 폰의 콜백메이트 「설정」입니다(자동 발송·통화 감지는 홈 「한 번에 켜기」). 회사 방침과 달리 폰마다 다를 수 있습니다.</p>
+      </div>
+      <div class="panel">
+        <h2>폰마다의 지금 상태 <span class="hint">· 웹에서는 알 수 없습니다</span></h2>
+        <ul class="how" id="ft-status">
+          <li>폰마다 어느 판인지, 통화 감지가 켜져 있는지는 이 화면에 나오지 않습니다. 폰이 보고할 서버가 없기 때문입니다(회사 원칙: 외부 서버를 두지 않음 — 폰은 배포처를 읽기만 합니다).</li>
+          <li><b>폰에서</b>: 콜백메이트 홈 → 「권한 진단」 → 「상태 복사」를 눌러 카카오톡으로 받습니다. 판 · 자동 발송 · 테스트 모드 · 통화 감지 · 전화 종류별 규칙 수 · 최근 일지가 들어 있습니다(번호·문자 내용 없음).</li>
+          <li><b>맥에서</b>: 폰을 USB로 꽂고 <code>scripts/phone-autoupdate.sh</code>(꽂은 폰을 최신 판으로 맞추고 점검) 또는 <code>scripts/reset-phone.sh --check-only</code>(점검만)를 돌린 기록을 봅니다. 통화 감지 · 권한 · 다른 앱 위에 표시 · 절전 예외를 읽습니다.</li>
+          <li>하루 한도·재발송 제한·연락처 제외 같은 나머지 값은 그 폰의 「설정」 화면에서 봅니다.</li>
+        </ul>
+      </div>
     </div>
   </div>
 </section>
@@ -483,6 +547,22 @@ const PROMISE_WORDS = ["정리해", "추려", "골라", "추천", "검토해", "
 // 맞추고(직원 수정 덮어쓰기 · 폰 전용 문구와 문구 사진 정리 · 규칙은 rules 그대로 켜짐·항상) 템플릿·규칙 고치기를 잠근다. 옛 앱은 무시한다.
 const MANAGED_LINE = "중앙 관리: 켬 — 직원 폰에서 문구·규칙을 고칠 수 없음(앱 v0.29.5부터)";
 
+// ---- 앱에 박힌 값(「기능」 탭이 그대로 보여 준다) ----
+// 앱을 바꾸면 여기도 바꾼다. scripts/tests/console_check.js 가 앱 소스(app/src/*/kotlin)에서 같은 값을 읽어 다르면 실패한다.
+const APP_FACTS = {
+  nightStart: 21, nightEnd: 8,  // SendDecisionEngine.NIGHT_START_HOUR·NIGHT_END_HOUR — 문자·팝업 없음 · 소리 나는 알림도 미룸(AlertQuietHours)
+  catalogCheckHours: 1,         // TemplateCatalogSync.CHECK_INTERVAL(문구 · 앱을 새 판으로 바꾼 뒤 첫 확인은 기다리지 않음)
+  photoCheckHours: 1,           // StaffImageSync.CHECK_INTERVAL(명부·명함·회사 사진)
+  updateCheckHours: 6,          // EnterpriseAppUpdater.CHECK_INTERVAL(사내 배포판 새 판 확인)
+  shortNumberDigits: 8,         // PhoneNumberNormalizer: 이보다 짧으면 긴급·특수번호(SHORT_CODE) — 허용 번호로도 못 푼다
+  mobilePrefixes: ["010", "011", "016", "017", "018", "019"],  // 휴대전화(MOBILE) = 기본 허용 번호 유형
+  dailyLimit: 200, dailyLimitMax: 500,  // AutomationSettings.DEFAULT_DAILY_LIMIT·MAX_DAILY_LIMIT
+  duplicateHours: 24,           // AutomationSettings.DEFAULT_DUPLICATE_WINDOW_HOURS
+  // 폰마다 정하는 것의 처음 값(AutomationSettings 기본값 · 사내 배포판은 처음 실행 때 AppInitializer 가 자동 보내기·업무 발신번호를 채운다)
+  automation: false, callMonitoring: false, testMode: true, excludeContacts: false, attachStaffCard: true, attachCompanyImage: true,
+  autoSendSeeded: true, senderSeeded: true,
+};
+
 // ---- 사진·명부 규칙 (docs/ADR-010, domain/images/) ----
 const PHOTO = { maxSide: 1280, quality: 0.85, warnBytes: 400 * 1024, maxBytes: 1024 * 1024, maxStaff: 50, maxName: 20, maxTitle: 20 };
 // 회사 사진은 목록이고 앱(v0.26)은 명함 뒤에 순서대로 모두 붙인다. 통신사 한 통 한도 약 900KB(MmsSender.MAX_MEDIA_BYTES)에서
@@ -504,6 +584,8 @@ let state = {
   // 명부·사진(staff.json 형식 2). files 는 배포처에 있는 사진(base64), staged 는 아직 안 올린 새 사진.
   roster: { format: 2, revision: 0, staff: [], shared: [] }, rosterFormat: 0, files: {}, staged: {}, rosterDirty: false, rosterSupported: true,
   version: null, release: null,
+  // 「기능」 탭은 배포된 것 기준이다(고치는 중인 문구·명부가 아니라). 불러올 때와 배포·반영한 뒤에만 바뀐다.
+  liveTemplates: null, liveRoster: null,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -687,12 +769,13 @@ function allIssues() {
 }
 
 // ---- 탭 ----
-const TABS = ["overview", "templates", "staff", "shared"];
+const TABS = ["overview", "templates", "staff", "shared", "features"];
 function showTab(id) {
   if (!TABS.includes(id)) id = "overview";
   for (const t of TABS) $("tab-" + t).hidden = t !== id;
   for (const b of $("tabs").querySelectorAll("button")) b.classList.toggle("on", b.dataset.tab === id);
   if (location.hash !== "#" + id) history.replaceState(null, "", "#" + id);
+  if (id === "features") drawFeatures();   // 다른 탭에서 고치는 중인지(배포 전 알림)를 열 때마다 새로 본다
 }
 for (const b of $("tabs").querySelectorAll("button")) b.onclick = () => showTab(b.dataset.tab);
 window.addEventListener("hashchange", () => showTab(location.hash.slice(1)));
@@ -854,7 +937,7 @@ function drawTemplatesBar() {
 }
 
 function drawTemplates() { drawList(); drawEditor(); drawPreview(); drawTemplatesBar(); drawTabs(); }
-function drawAll() { drawTemplates(); drawRoster(); drawShared(); drawOverview(); }
+function drawAll() { drawTemplates(); drawRoster(); drawShared(); drawOverview(); drawFeatures(); }
 function touch() { state.dirty = true; drawTemplates(); drawOverview(); }
 function touchLight() { state.dirty = true; drawList(); drawPreview(); drawTemplatesBar(); drawTabs(); }
 
@@ -911,10 +994,7 @@ function drawOverview() {
       <div class="row"><button class="small" data-go="shared">회사 사진 고치기</button></div>
     </div>`;
   for (const b of $("ov-cards").querySelectorAll("[data-go]")) b.onclick = () => showTab(b.dataset.go);
-  $("btn-copy-link").onclick = async () => {
-    try { await navigator.clipboard.writeText(INSTALL_URL); setStatus("설치 링크를 복사했습니다", "ok"); }
-    catch (e) { showDialog("설치 링크", `<p>직접 복사하세요.</p><pre class="json">${esc(INSTALL_URL)}</pre>`); }
-  };
+  $("btn-copy-link").onclick = copyInstallLink;
 
   const g = $("ov-glance");
   if (!state.templates.length) { g.innerHTML = '<div class="empty">문구가 없습니다.</div>'; return; }
@@ -924,6 +1004,152 @@ function drawOverview() {
     const kinds = (t.rules || []).map((x) => RULE_NAMES[x] || x).join(" · ") || "직원이 직접 고를 때";
     return `<div class="g"><h4>${esc(t.name)}</h4><div class="meta">${esc(kinds)} · ${esc(who)}</div><pre>${esc(render((t.body || "").trim(), staff, 10))}</pre></div>`;
   }).join("");
+}
+
+/** 「기능」 탭의 명부 한 줄(배포된 것) — 직원 수 · 명함 수 · 회사 사진 수 · 개정. 이름·번호는 담지 않는다. */
+function rosterSummary(roster) {
+  const staff = (roster && roster.staff) || [];
+  return { revision: Number((roster && roster.revision) || 0), staff: staff.length,
+    cards: staff.filter((x) => x && x.card).length, shared: ((roster && roster.shared) || []).length };
+}
+/** 배포된 문구를 「기능」 탭용으로 따로 둔다(고치는 중인 문구와 섞이지 않게). */
+const liveCopy = (templates) => (templates || []).map((t) => ({ key: t.key, name: t.name, rules: [...(t.rules || [])], staff: [...(t.staff || [])] }));
+
+async function copyInstallLink() {
+  try { await navigator.clipboard.writeText(INSTALL_URL); setStatus("설치 링크를 복사했습니다", "ok"); }
+  catch (e) { showDialog("설치 링크", `<p>직접 복사하세요.</p><pre class="json">${esc(INSTALL_URL)}</pre>`); }
+}
+
+// ---- 기능(보기만 함) ----
+// 배포된 문구·명부와 version.json, 그리고 앱에 박힌 값(APP_FACTS)만 보여 준다. 전화번호와 문자 내용은 싣지 않는다.
+const HHMM = (h) => `${String(h).padStart(2, "0")}:00`;
+const PHONE_RE_ALL = new RegExp(PHONE_RE.source, "g");
+/** 이 탭에 옮기는 이름(문구·직원). 혹시 들어 있는 휴대폰 번호는 가린다. */
+const safeName = (s) => esc(String(s || "").replace(PHONE_RE_ALL, "(번호 가림)"));
+// 앱의 통화 유형과 이 탭의 이름. 「문구」 탭 칩 이름은 RULE_NAMES.
+const CALL_KINDS = [["incoming", "받은 전화"], ["outgoing", "건 전화"], ["missed", "받지 못한 전화"]];
+
+/** 통화 유형마다 그 뒤 팝업을 맡은 문구 — 모든 직원 몫(all)과 직원 전용 몫(some). */
+function ruleOwners(templates) {
+  const out = {};
+  for (const [type] of CALL_KINDS) {
+    const owners = (templates || []).filter((t) => (t.rules || []).includes(type));
+    out[type] = { all: owners.filter((t) => !(t.staff || []).length), some: owners.filter((t) => (t.staff || []).length) };
+  }
+  return out;
+}
+
+/**
+ * 「기능」 탭 한 줄. name·val·pill 글자는 여기서 esc 하고, does·now·where·extra 는 만든 쪽이 바뀌는 값을 esc 한 HTML 이다.
+ * 오른쪽에는 상태 알약(pill = [ok|warn|bad|busy, 글자]) 또는 값 글자(val) 하나.
+ */
+function featRow({ name, does, now, where, extra, pill, val }) {
+  const right = pill ? `<span class="status ${pill[0]}">${esc(pill[1])}</span>` : val ? `<span class="val">${esc(val)}</span>` : "";
+  return `<li><div class="t"><b>${esc(name)}</b>` + (does ? `<span>${does}</span>` : "") + (now ? `<span class="now">${now}</span>` : "") +
+    (where ? `<span class="where"><b>고치는 곳</b> ${where}</span>` : "") + (extra || "") + `</div>${right}</li>`;
+}
+
+function drawFeatures() {
+  const F = APP_FACTS;
+  const night = `${HHMM(F.nightStart)}~${HHMM(F.nightEnd)}`;
+  const live = state.liveTemplates, r = state.liveRoster, v = state.version, rel = state.release, rev = state.revision;
+  const notes = [];
+  if (state.dirty) notes.push("「문구」 탭에 배포하지 않은 고친 내용이 있습니다. 이 탭은 배포된 것 기준입니다.");
+  if (state.rosterDirty) notes.push("「직원·명함」·「회사 사진」 탭에 반영하지 않은 고친 내용이 있습니다. 이 탭은 배포된 것 기준입니다.");
+  $("ft-issues").innerHTML = notes.map((t) => `<li class="w">${esc(t)}</li>`).join("");
+
+  // 1) 통화 뒤 팝업 — 배포된 문구의 rules
+  const owners = live ? ruleOwners(live) : null;
+  const ownerText = (o) => [...o.all.map((t) => `「${safeName(t.name)}」 · 모든 직원`),
+    ...o.some.map((t) => `「${safeName(t.name)}」 · ${safeName((t.staff || []).join(", "))} 전용`)].join(" / ");
+  const DOES = {
+    incoming: "고객이 건 전화를 받고 끊으면 팝업이 뜨고, 맡은 문구가 맨 위 「추천」에 미리 골라져 있습니다.",
+    outgoing: "직원이 건 전화가 끝나면 팝업이 뜹니다. 고객이 받았는지 앱이 모르므로 맡은 문구를 「추천」에 두고 직원이 고릅니다.",
+    missed: "울렸지만 받지 못한(거절 포함) 전화입니다. 회사 방침(9/25 제나 검문 C-66)으로 이 뒤에는 팝업을 띄우지 않습니다.",
+  };
+  $("ft-rules").innerHTML = CALL_KINDS.map(([type, name]) => {
+    const does = DOES[type];
+    if (!owners) return featRow({ name, does, now: "지금: 확인 중…", pill: ["busy", "확인 중"] });
+    const o = owners[type];
+    const all = o.all.length > 0, some = !all && o.some.length > 0;
+    if (type === "missed") {
+      if (!all && !some) {
+        return featRow({ name, does, now: "지금: 맡은 문구 없음 — 회사 방침대로 팝업이 뜨지 않습니다",
+          where: "바꾸지 않습니다(회사 방침) — 「문구」 탭에는 이 선택지가 없습니다", pill: ["ok", "꺼짐"] });
+      }
+      return featRow({ name, does, now: `지금: ${ownerText(o)} — <b class="bad">회사 방침과 다릅니다</b>`,
+        where: `「문구」 탭에서 그 문구의 빨간 「${esc(RULE_NAMES.missed)}」을 끄고 배포`, pill: ["bad", all ? "켜짐" : "일부 켜짐"] });
+    }
+    const where = `「문구」 탭 → 문구를 고르고 「어떤 전화에 쓸지」의 「${esc(RULE_NAMES[type])}」 → 배포`;
+    if (all) return featRow({ name, does, now: `지금: ${ownerText(o)}`, where, pill: ["ok", "켜짐"] });
+    if (some) return featRow({ name, does, now: `지금: ${ownerText(o)} — 나머지 폰에는 이 전화 뒤 팝업이 뜨지 않습니다`, where, pill: ["warn", "일부 직원만"] });
+    return featRow({ name, does, now: "지금: 맡은 문구가 없어 이 전화 뒤 팝업이 뜨지 않습니다", where, pill: ["bad", "꺼짐"] });
+  }).join("");
+  $("ft-rules-note").textContent = `팝업에는 「추천」 아래에 나머지 문구가 목록 순서대로 모두 나옵니다. 규칙이 켜져 있어도 밤(${night})·짧은 번호·그 폰의 설정(자동 발송·테스트 모드 등)에 따라 팝업이 뜨지 않을 수 있습니다.`;
+
+  // 2) 직원 폰이 받아 가는 것 — 배포처의 templates.json · staff.json · version.json
+  const commonCount = live ? live.filter((t) => !(t.staff || []).length).length : 0;
+  const rosterNow = !r ? "지금: 확인 중…"
+    : !state.rosterSupported ? "지금: 이 자리에서는 명부를 읽지 못합니다(로컬 서버가 옛 판입니다)"
+    : state.rosterFormat && state.rosterFormat < 2 ? "지금: 배포처 명부가 옛 형식이라 사진 목록이 없습니다"
+    : `지금: 직원 ${r.staff}명 · 명함 ${r.cards}장 · 회사 사진 ${r.shared}장`;
+  const code = v ? Number(v.versionCode) || 0 : 0;
+  const min = v ? Math.max(0, Math.floor(Number(v.minVersionCode) || 0)) : 0;
+  const tag = rel && rel.tag_name ? String(rel.tag_name) : "";
+  const relText = !v || !tag ? "" : tag === `v${v.versionName}` ? ` · 설치 링크도 ${esc(tag)}` : ` · <b class="warn">설치 링크는 ${esc(tag)} — 판이 다릅니다</b>`;
+  const minNow = !v ? "지금: 확인 중…"
+    : !min ? "지금: 없음 — 모든 폰에 보통 새 판 알림만 갑니다"
+    : min >= code ? `지금: 판 번호 ${min} = 최신 판 — 최신 판이 아닌 폰은 모두 빨간 카드를 봅니다`
+    : `지금: 판 번호 ${min} — 그보다 낮은 폰만 빨간 카드, 나머지는 보통 새 판 알림`;
+  $("ft-dist").innerHTML = [
+    featRow({ name: "문구", does: "통화 뒤 팝업에 나오는 문구 묶음입니다. 문구마다 받는 직원을 정할 수 있습니다.",
+      now: live ? `지금: 문구 ${live.length}개 — 모든 직원 ${commonCount}개 · 직원 전용 ${live.length - commonCount}개` : "지금: 확인 중…",
+      where: `「문구」 탭 → 「직원 폰에 배포하기」 · 폰은 늦어도 ${F.catalogCheckHours}시간 안에 받아 갑니다`, val: live ? `개정 ${rev}` : "확인 중" }),
+    featRow({ name: "중앙 관리", does: "켜져 있으면 앱 v0.29.5 이상 폰은 문구·규칙을 배포된 것과 똑같이 맞추고(직원이 고친 문구·폰에서만 만든 문구는 정리) 직원이 고치지 못하게 잠급니다. 그 아래 판 폰은 이 표시를 모릅니다.",
+      now: !live ? "지금: 확인 중…" : state.managed ? `지금: 켬(개정 ${rev})` : `지금: 개정 ${rev} 은 아직 중앙 관리 전 — 다음 배포(개정 ${rev + 1})부터 켜집니다`,
+      where: "끄는 스위치는 없습니다 — 이 화면은 배포할 때마다 켭니다", pill: !live ? ["busy", "확인 중"] : state.managed ? ["ok", "켬"] : ["warn", "아직"] }),
+    featRow({ name: "명함·회사 사진", does: "문자에 담당자 명함(첫 장)과 회사 사진(그 뒤 순서대로)이 함께 나갑니다. 폰은 마이페이지 이름으로 자기 명함을 찾습니다.",
+      now: rosterNow, where: `「직원·명함」·「회사 사진」 탭 → 「직원 폰에 반영하기」 · 앱 v0.26 이상 폰이 늦어도 ${F.photoCheckHours}시간 안에 받아 갑니다`,
+      val: r ? `명부 개정 ${r.revision}` : "확인 중" }),
+    featRow({ name: "앱 판", does: `직원 폰에 안내하는 최신 판입니다. 폰은 ${F.updateCheckHours}시간마다 확인해 홈 카드와 알림으로 설치를 권합니다(설치는 직원이 누릅니다).`,
+      now: v ? `지금: v${esc(v.versionName)} (판 번호 ${code})${relText}` : "지금: 배포처 version.json 을 아직 읽지 못했습니다",
+      where: "이 화면에서는 바꾸지 않습니다 — 내 맥에서 <code>scripts/release-enterprise.sh</code> 로 만든 판을 릴리스하고 배포처 version.json 을 바꿉니다",
+      val: v ? `v${v.versionName}` : "확인 중" }),
+    featRow({ name: "꼭 깔아야 하는 판(최소 판)", does: `이보다 낮은 폰(앱 v0.29.4 이상)은 홈에 빨간 「업데이트 필요」 카드와 소리 나는 알림이 뜹니다. 알림은 ${night}에는 미뤘다가 ${HHMM(F.nightEnd)} 뒤에 올립니다(홈 카드는 밤에도 보입니다).`,
+      now: minNow, where: "릴리스할 때 정합니다 — <code>scripts/release-enterprise.sh --min-current</code>(이번 판으로) · 옵션이 없으면 지난 값 그대로",
+      val: !v ? "확인 중" : min ? `판 번호 ${min}` : "없음" }),
+    featRow({ name: "설치 링크", does: "직원에게 보내면 언제나 최신 판이 깔립니다(새 폰 · 앱이 너무 옛 판인 폰).",
+      now: `<code>${esc(INSTALL_URL)}</code>`, extra: '<div class="row"><button class="small" data-copy-install>설치 링크 복사</button></div>' }),
+  ].join("");
+  for (const b of $("ft-dist").querySelectorAll("[data-copy-install]")) b.onclick = copyInstallLink;
+
+  // 3) 회사 방침 — 앱에 박힌 값
+  const syncVal = F.catalogCheckHours === F.photoCheckHours ? `${F.catalogCheckHours}시간` : `문구 ${F.catalogCheckHours}시간 · 사진 ${F.photoCheckHours}시간`;
+  $("ft-policy").innerHTML = [
+    featRow({ name: "밤에는 쉼", does: `이 시간에는 문자를 보내지 않고 통화 뒤 팝업도 띄우지 않습니다. 새 판 알림·감지 경고처럼 소리 나는 알림도 ${HHMM(F.nightEnd)} 뒤로 미룹니다.`, val: night }),
+    featRow({ name: "미뤄 둔 문자", does: `팝업에서 「나중에 보내기」로 둔 문자는 통화한 날 ${HHMM(F.nightStart)}까지만 보낼 수 있습니다.`, val: `당일 ${HHMM(F.nightStart)}까지` }),
+    featRow({ name: "짧은 번호·긴급번호", does: `${F.shortNumberDigits}자리보다 짧은 번호(112·119·114 같은 긴급·특수번호)에는 보내지 않고 팝업도 없습니다. 허용 번호에 넣어도 풀리지 않습니다.`, val: "언제나 제외" }),
+    featRow({ name: "문구·명함 받아 오기", does: "앱 화면을 열거나 통화 팝업이 닫힐 때, 마지막 확인에서 이 시간이 지났으면 배포처를 다시 읽습니다(뒤에서 혼자 도는 타이머는 없음). 앱을 새 판으로 바꾼 뒤 첫 확인은 기다리지 않고 문구를 바로 받습니다.", val: syncVal }),
+    featRow({ name: "새 판 확인", does: "마지막 확인에서 이 시간이 지나면 배포처 version.json 을 다시 읽어 새 판을 알립니다(사내 배포판).", val: `${F.updateCheckHours}시간` }),
+  ].join("");
+
+  // 4) 폰마다 정하는 것 — 앱을 처음 깔았을 때의 값(AutomationSettings · 사내 배포판 첫 실행)
+  const first = (on) => (on ? "처음 켜짐" : "처음 꺼짐");
+  $("ft-phone").innerHTML = [
+    featRow({ name: "자동 발송 전체 스위치", does: "꺼져 있으면 통화가 끝나도 앱이 아무 일도 하지 않습니다. 설치 때 홈 「한 번에 켜기」로 켭니다.", val: first(F.automation) }),
+    featRow({ name: "통화 종료 감지", does: "통화가 끝나는 순간을 잡는 상시 알림 서비스입니다. 「한 번에 켜기」로 켭니다.", val: first(F.callMonitoring) }),
+    featRow({ name: "테스트 모드", does: "켜져 있으면 테스트번호로 등록한 번호에만 보냅니다. 「한 번에 켜기」 끝의 「테스트 모드를 끌까요?」에서 끕니다.", val: first(F.testMode) }),
+    featRow({ name: "자동 보내기", does: "켜져 있으면 팝업에서 고른 문구가 글·사진 한 통으로 그 자리에서 나갑니다. 끄면 문자 앱이 열리고 직원이 전송을 누릅니다.", val: first(F.autoSendSeeded) }),
+    featRow({ name: "업무 발신번호(보내는 SIM)", does: "이 번호의 SIM으로만 보내고, 그 SIM이 없으면 보내지 않습니다(개인 번호로 잘못 나가지 않게). 처음 실행 때 이 폰 번호로 채웁니다(듀얼 SIM이면 명함 번호와 맞는 SIM).",
+      val: F.senderSeeded ? "처음 이 폰 번호" : "처음 빈칸" }),
+    featRow({ name: "제외·허용 번호", does: "제외 번호에는 보내지 않습니다(허용보다 먼저). 허용 번호는 번호 유형·연락처 제외를 건너뜁니다. 고객 번호라 어디에도 올리지 않고 백업도 없어, 앱을 지우면 되살릴 수 없습니다.", val: "폰 안에만" }),
+    featRow({ name: "허용 번호 유형", does: `휴대전화(${F.mobilePrefixes.join("·")})에만 보냅니다. 유선·070·대표번호 등은 그 폰 설정에서 켭니다.`, val: "처음 휴대전화만" }),
+    featRow({ name: "연락처에 저장된 번호 제외", does: "꺼져 있으면 주소록에 저장된 고객에게도 보냅니다. 켜면 저장된 번호는 건너뜁니다.", val: first(F.excludeContacts) }),
+    featRow({ name: "하루 한도", does: `그날 보낸 문자(성공한 것만)가 이 수에 닿으면 더 보내지 않습니다(1~${F.dailyLimitMax}건).`, val: `처음 ${F.dailyLimit}건` }),
+    featRow({ name: "같은 번호 재발송 제한", does: "이 시간 안에 이미 보낸 번호면 팝업에서는 경고만 하고 직원이 정하며, 자동 발송에서는 건너뜁니다(0이면 제한 없음).", val: `처음 ${F.duplicateHours}시간` }),
+    featRow({ name: "명함·회사 사진 붙이기", does: "문자에 내 명함(첫 장)과 회사 공통 사진을 함께 보냅니다. 둘을 따로 끌 수 있습니다.",
+      val: F.attachStaffCard === F.attachCompanyImage ? first(F.attachStaffCard) : `명함 ${F.attachStaffCard ? "켬" : "끔"} · 사진 ${F.attachCompanyImage ? "켬" : "끔"}` }),
+  ].join("");
 }
 
 // ---- 명부·사진 ----
@@ -1228,7 +1454,9 @@ async function saveRoster() {
     const n = normalizeRoster(roster);
     state.roster = n.roster; state.rosterFormat = 2; state.rosterDirty = false;
     if (res && res.revision) state.roster.revision = res.revision;
+    state.liveRoster = rosterSummary(state.roster);
     syncStaffFromRoster();
+    drawFeatures();
     setStatus(`반영했습니다 · 명부 개정 ${state.roster.revision}`, "ok");
     showDialog("직원 폰에 반영합니다", `<p>명부 개정 <b>${state.roster.revision}</b> 으로 올렸습니다. 직원 ${roster.staff.length}명, 회사 사진 ${roster.shared.length}장.</p>
       <p>앱 <b>v0.26 이상</b>인 폰은 앱을 열거나 통화 팝업이 닫힐 때 새 사진을 받아 갑니다. 늦어도 1시간.</p>
@@ -1462,7 +1690,7 @@ async function loadRelease() {
     const headers = { Accept: "application/vnd.github+json" };
     if (backend === githubBackend && githubBackend.token) headers.Authorization = "Bearer " + githubBackend.token;
     const res = await fetch(`https://api.github.com/repos/${DIST_REPO}/releases/latest`, { headers, cache: "no-store" });
-    if (res.ok) { state.release = await res.json(); drawOverview(); }
+    if (res.ok) { state.release = await res.json(); drawOverview(); drawFeatures(); }
   } catch (e) { /* 배포일만 빠진다 */ }
 }
 
@@ -1491,6 +1719,8 @@ async function load() {
       : result.staff;
     state.version = result.version || null;
     state.managed = result.catalog.managed === true;
+    state.liveTemplates = liveCopy(state.templates);
+    state.liveRoster = rosterSummary(state.roster);
     state.sel = 0; state.dirty = false; state.rosterDirty = false; state.source = result.source; state.canPublish = result.canPublish;
     setStatus("불러왔습니다", "ok");
     if (backend === githubBackend && (githubBackend.scopes || []).some((s) => s !== "gist")) {
@@ -1540,6 +1770,8 @@ async function publish() {
     const body = payload();
     const source = await backend.publish(body);
     state.revision = body.revision; state.dirty = false; state.source = source || state.source; state.managed = body.managed === true;
+    state.liveTemplates = liveCopy(body.templates);
+    drawFeatures();
     setStatus(`배포했습니다 · 개정 ${body.revision}`, "ok");
     showDialog("배포했습니다", `<p>개정 <b>${body.revision}</b> 으로 올렸습니다. 문구 ${state.templates.length}개.</p>
       <p>직원 폰은 앱을 열거나 <b>통화 팝업이 닫힐 때</b> 새 문구를 받아 갑니다. 늦어도 1시간 안에 모두 바뀝니다.</p>
