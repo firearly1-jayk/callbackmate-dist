@@ -283,7 +283,7 @@
         <li><b>앱 자체</b> — 새 버전을 올리면 폰이 <b>6시간</b>마다 확인해 설치를 권합니다(v0.20 이상). 그보다 낮은 폰은 설치 링크로 한 번 다시 깔아야 그 뒤로 자동입니다.</li>
         <li>폰은 아무것도 되돌려 보내지 않습니다(어느 폰이 어디까지 받았는지는 여기서 알 수 없습니다). 확인은 그 폰의 템플릿 탭 맨 위와 설정 화면에서.</li>
         <li>새 직원: 여기서 이름·직함·명함을 넣고 → 폰에 앱을 깔고 → 폰 마이페이지 이름칸에 <b>이 명부와 같은 이름</b>(띄어쓰기 무관)과 직함을 넣어 저장하면 그 명함이 붙습니다. 전화번호는 이 화면에 넣지 않습니다.</li>
-        <li>문자 끝 서명의 이름·직함은 <b>각 폰 마이페이지 값</b>입니다. 여기서 이름·직함을 바꾸면 그 직원 폰의 마이페이지도 같게 고쳐 저장하세요(폰은 스스로 바꾸지 않습니다).</li>
+        <li>문자 속 담당자 이름·직함·번호는 <b>각 폰 마이페이지 값</b>입니다. 여기서 이름·직함을 바꾸면 그 직원 폰의 마이페이지도 같게 고쳐 저장하세요(폰은 스스로 바꾸지 않습니다).</li>
       </ul>
     </div>
   </div>
@@ -329,7 +329,7 @@
       </div>
       <div class="counts" id="counts"></div>
       <ul class="issues" id="issues"></ul>
-      <p class="note" id="photo-note">담당자 명함과 회사 사진이 이 글과 함께 한 통으로 나갑니다. 명함에 있는 대표번호·주소·홈페이지는 글에 다시 쓰지 않습니다.</p>
+      <p class="note" id="photo-note">담당자 명함과 회사 사진이 이 글과 함께 한 통으로 나갑니다. 회사 소개(대표번호·주소·홈페이지·수상)는 글에도 그대로 씁니다. 감사·부탁·답장 요청 없이 자신 있게 알립니다(10-01 대표).</p>
       <p class="note"><b>어떤 전화에 쓸지</b>를 고른 문구는 그 통화 뒤 팝업 맨 위 「추천」 칸에 뜹니다. 걸려 온 전화 뒤에는 미리 골라져 있고, 내가 건 전화 뒤에는 받았는지 앱이 모르므로 직원이 고릅니다(앱 v0.29.3). 나머지 문구는 이 목록 순서대로 그 아래에 모두 나옵니다.</p>
     </section>
   </main>
@@ -370,7 +370,7 @@
       </div>
       <ul class="issues" id="shared-issues"></ul>
       <p class="note">명함이 첫 장, 여기 사진들이 순서대로 뒤에 붙습니다. 회사 사진은 3장까지(명함까지 한 통에 4장). 장수와 용량이 늘수록 받는 폰에서 스크롤이 길어지고 한 통 용량 한도(약 900KB)에 가까워집니다.</p>
-      <p class="note">언론보도·수상 실적·인증처럼 <b>회사가 어떤 곳인지</b> 보여 주는 사진을 두세요. 글에 다시 쓸 필요가 없는 정보(대표번호·주소)는 사진에 두는 것이 낫습니다. 용량이 넘치면 앱이 먼저 화질을 낮추고, 그래도 넘치면 <b>뒤에서부터</b> 뺍니다(명함은 남습니다).</p>
+      <p class="note">언론보도·수상 실적·인증처럼 <b>회사가 어떤 곳인지</b> 보여 주는 사진을 두세요. 용량이 넘치면 앱이 먼저 화질을 낮추고, 그래도 넘치면 <b>뒤에서부터</b> 뺍니다(명함은 남습니다).</p>
     </div>
   </div>
 </section>
@@ -404,11 +404,14 @@
 
 // ---- 앱과 같은 규칙 (domain/catalog/TemplateCatalogCodec.kt, BuiltInCatalogTest.kt) ----
 const LIMITS = {
-  maxChars: 320,        // 치환 후 본문 길이
-  maxLines: 12,
+  // 짧은 안내 기준(앱 BuiltInCatalogTest · 치환 후). 넘어도 경고만 한다 —
+  // 2026-10-01 대표: 회사 소개 문구는 소개 내용을 그대로 길게 보낸다.
+  softChars: 320,
+  softLines: 12,
   visibleHead: 193,     // 삼성 메시지가 접어도 보이는 것이 확인된 앞부분
-  maxBody: 1000,        // 저장 가능한 원본 길이
-  maxName: 40,
+  // 배포를 막는 길이는 앱이 받지 않는 길이뿐이다(TemplateCatalogCodec: 하나라도 넘으면 폰이 묶음 전체를 받지 않는다).
+  maxBody: 1000,        // 원본 길이(앞뒤 공백 뺀 것 · 앱 MessageTemplate.MAX_BODY_LENGTH · UTF-16 단위라 이모지 하나가 2자)
+  maxName: 40,          // 앱 MessageTemplate.MAX_NAME_LENGTH
   maxKey: 40,
   maxTemplates: 50,
 };
@@ -416,14 +419,49 @@ const LIMITS = {
 const RULES = [["incoming", "걸려온 전화"], ["outgoing", "내가 건 전화"]];
 const RULE_NAMES = { incoming: "걸려온 전화", outgoing: "내가 건 전화", missed: "받지 못한 수신 전화" };
 const VARS = [["{담당자명}", "담당자 이름"], ["{담당자직함}", "직함"], ["{약속시점}", "팝업에서 고른 날짜·시각 (고르지 않으면 오늘 안에 / 다음 영업일 오전까지)"], ["{회사명}", "회사 이름"], ["{담당자연락처}", "담당자 번호"]];
-const BANNED = ["http", "www.", "%"];
+// 글에 넣을 수 있는 주소는 이 두 개뿐이다(2026-10-01 대표: 회사 소개 문구에 홈페이지·블로그 글 주소를 그대로 넣는다).
+// 글자 하나까지 같아야 한다. 뒤에 무엇이 붙으면(…com.xx · …com/xx · …com@xx · …com에서) 다른 주소로 보고 막는다.
+const URL_ALLOW = ["https://irumbiz.com", "https://m.blog.naver.com/firearly/223564423164"];
+// 길게 써도 되는 회사 소개 문구의 키(개정 18 · 2026-10-01 대표 「그내용을 그냥 보내도 될거 같고」·「처음 두 개만」·「전부 추천대로」).
+// 나머지 문구는 짧은 안내 기준(320자·12줄)을 넘으면 예전처럼 막는다(JENA MAIN 10-01: 넓게 풀지 말고 두 키만).
+const INTRO_KEYS = ["no_answer", "after_call"];
+// 주소의 시작: https:// 같은 머리나 www., 또는 머리 없이 쓴 영문 도메인(bit.ly/… · naver.me/…).
+// 전자우편(…@naver.com)은 주소로 보지 않는다. (옛 사파리에서도 열리도록 뒤돌아보기 정규식은 쓰지 않는다)
+const URL_HEAD = /[a-z][a-z0-9+.-]*:\/\/|www\./i;
+const URL_BARE = /(^|[^\w@.-])((?:[a-z0-9-]+\.)+(?:com|net|org|kr|me|ly|io|co|gl|gd|do|la|to|at|so|ai|tv|cc|us|jp|cn|biz|info|xyz|top|site|link|app|page|shop|club|online|store|asia)(?![\w-]))/i;
+/**
+ * 글을 띄어쓰기·줄바꿈으로 자른 조각마다, 주소가 시작되는 곳부터 조각 끝까지를 주소 하나로 본다
+ * (폰도 띄어쓰기 전까지를 한 링크로 잇는다). urls 는 그 주소들, rest 는 주소를 뺀 나머지 글.
+ */
+function splitUrls(body) {
+  const urls = [], rest = [];
+  for (const chunk of String(body).split(/\s+/)) {
+    let at = chunk.search(URL_HEAD);
+    const bare = URL_BARE.exec(chunk);
+    if (bare) { const j = bare.index + bare[1].length; if (at < 0 || j < at) at = j; }
+    if (at < 0) { rest.push(chunk); continue; }
+    urls.push(chunk.slice(at));
+    rest.push(chunk.slice(0, at));
+  }
+  return { urls, rest: rest.join(" ") };
+}
+// 허용 주소를 뺀 나머지 글에 남으면 안 되는 것(대소문자 무시)
+const BANNED = ["http", "www.", "://", "%"];
 // 제나 금지어(앱 domain/policy/CopyGuard.kt 와 같은 목록 · BuiltInCatalogTest 가 대조한다 · 2026-09-30 JENA D-136).
 // 출처: ai-blog-bot banned_words 27 · 제나 D-062 ④ 6 · D-102 · 이 앱 문구 규칙. COPY_BANNED 는 배포를 막고 COPY_CHECK 는 경고만 한다.
 const COPY_BANNED = ["대출", "100%", "무조건", "누구나 가능", "확정 승인", "반드시 받을 수 있다", "성공보수", "승인률", "승인율", "신청대행", "대신 신청", "받아드립", "받아 드립", "한도를 올려", "한도 올려", "심사위원", "내부 라인", "내부 노하우", "인맥", "정부 지정", "정부지정", "공식 협약", "협약 기관", "공식 파트너", "전액 지원", "즉시 승인", "누적 승인", "공식 인증", "중기부 소속", "정부 공인", "국가 인증", "중기부 지정", "나랏돈", "공인", "한도", "선착순", "오늘 마감", "공식 업체", "공식 컨설팅", "허가 업체", "지금 아니면", "오늘까지만"];
 const COPY_CHECK = ["무료", "정부", "보장", "누구나", "1위", "마감", "전문기관", "전문 기관", "무상"];
+// 금지어를 품은 정상 낱말. 「소상공인」의 「공인」은 「정부 공인」 같은 기관 사칭 말이 아니다(개정 18 「소상공인정책자금」).
+// COPY_BANNED 는 앱 CopyGuard.BANNED 와 같아야 하므로(BuiltInCatalogTest 가 대조) 목록은 그대로 두고, 검사할 때만 이 낱말을 지운다.
+const COPY_EXCEPT = { "공인": ["소상공인"] };
+/** 금지어 w 가 body 에 있는지. 예외 낱말은 줄바꿈으로 바꿔 지운다(앞뒤 글자가 붙어 새 금지어가 생기지 않게). */
+const copyHas = (body, w) => (COPY_EXCEPT[w] || []).reduce((s, x) => s.split(x).join("\n"), body).includes(w);
 const MAX_AMOUNT = /최대\s*\d[\d,.]*\s*(억|천만|백만|만)/;
 const BRAND = "[이룸경영지원센터]";
-const PHOTO_ONLY = ["1688-0239", "irumbiz.com", "청라커낼로", "사업자등록번호", "브랜드평판", "국가품질만족지수", "소비자만족", "ISO", "이노비즈", "메인비즈"];
+// 대표 지시 2026-10-01: 회사 소개(대표번호·주소·홈페이지·수상·사업자등록번호)는 글에도 그대로 쓴다.
+// 예전의 「사진에 이미 있으니 글에서 빼세요」 경고(PHOTO_ONLY)와 「마지막 줄은 서명」 권고는 없앴다.
+// 답장을 청하는 문장(2026-09-30 대표 지시 · 개정 14 · 10-01 「답장 요청 없이」). 앱 BuiltInCatalogTest 의 목록에 「문자 주세요」 꼴과 회신·답변 요청을 더했다.
+const REPLY_ASK = /(?:답|답장|답변|회신|문자로?) ?(?:주세요|주시면|부탁)/;
 const MONEY = /\d[\d,.]*\s*(억|천만|백만|만|천)?\s*원/;
 const KEY_RE = /^[a-z0-9][a-z0-9_-]*$/;
 const WORST = { name: "남궁민수", title: "수석컨설턴트" };  // 이름+직함 10자, 앱의 경고 상한
@@ -437,7 +475,7 @@ const PROMISE_LONGEST = "12/31(목) 18:30에";
 const PROMISE_SAMPLE = "10/1(목) 10:00에";
 // 앱 BuiltInCatalogTest 와 같은 어조 규칙(부탁·사과·낮춤 · 2026-09-16 대표 평가). 배포는 막지 않고 경고한다.
 const WEAK = ["부탁드", "죄송", "양해", "괜찮으시", "조르지", "번거로우", "실례", "정하셔도 됩니다", "감사합니다", "해 주시면 감사"];
-// 약속 없는 판(개정 17)에 남으면 안 되는 약속 낱말
+// 약속 없는 판(「(약속 없음)」 · 개정 17에서 생김)에 남으면 안 되는 약속 낱말
 // (앱 BuiltInCatalogTest 「약속 없는 판에는 추천·정리·다시 연락 약속과 약속 시점이 없다」와 같은 목록)
 const PROMISE_WORDS = ["정리해", "추려", "골라", "추천", "검토해", "연락드리", "전화드리겠", "보내드리", "알려드리", "안내하겠", "목록", "확인하신", "접수 가능한 자금", "{약속시점}"];
 
@@ -520,23 +558,32 @@ function checkTemplate(t, index) {
   if (body.length > LIMITS.maxBody) add("e", `내용이 ${LIMITS.maxBody}자를 넘습니다.`);
 
   const staff = worstStaffFor(t);
+  // 18:00 전 · 18:00 이후 · 팝업에서 날짜·시각을 고른 경우(가장 긴 약속 값) 세 판으로 본다
   const variants = [
-    { hour: CHECK_HOURS[0], when: "18:00 전에 보내면" },
-    { hour: CHECK_HOURS[1], when: "18:00 이후에 보내면" },
-    { hour: CHECK_HOURS[0], promise: PROMISE_LONGEST, when: `팝업에서 날짜·시각을 고르면(가장 긴 「${PROMISE_LONGEST}」 기준)` },
+    { hour: CHECK_HOURS[0] },
+    { hour: CHECK_HOURS[1] },
+    { hour: CHECK_HOURS[0], promise: PROMISE_LONGEST },
   ];
-  let braces = false;
+  let braces = false, longest = 0, mostLines = 0;
   for (const v of variants) {
     const text = render(body, staff, v.hour, v.promise);
-    if (text.length > LIMITS.maxChars) add("e", `${v.when} ${text.length}자입니다. ${LIMITS.maxChars}자 이하로 줄이세요.`);
-    if (text.split("\n").length > LIMITS.maxLines) add("e", `${v.when} ${text.split("\n").length}줄입니다. ${LIMITS.maxLines}줄 이하로 줄이세요.`);
+    longest = Math.max(longest, text.length);
+    mostLines = Math.max(mostLines, text.split("\n").length);
     if (/[{}]/.test(text)) braces = true;
   }
   if (braces) add("e", "치환되지 않는 중괄호가 있습니다. 변수 이름을 확인하세요.");
-  // 지금 직원들의 이름은 짧지만, 이름이 긴 직원이 들어오면 같은 문구가 길어진다(앱이 경고하는 상한은 이름+직함 10자).
-  const worstCase = render(body, WORST, CHECK_HOURS[0], PROMISE_LONGEST);
-  if ((staff.name + staff.title).length < (WORST.name + WORST.title).length && worstCase.length > LIMITS.maxChars) {
-    add("w", `이름이 긴 담당자(${WORST.name} ${WORST.title})가 들어오면 ${worstCase.length}자가 됩니다.`);
+  // 짧은 안내 기준(320자·12줄): 회사 소개 두 문구(INTRO_KEYS)는 알리기만 하고(2026-10-01 대표 · 개정 18), 나머지 문구는 막는다.
+  const intro = INTRO_KEYS.includes(t.key || "");
+  if ((longest > LIMITS.softChars || mostLines > LIMITS.softLines) && intro) {
+    add("w", `보내는 글이 ${longest}자·${mostLines}줄로 짧은 안내 기준(${LIMITS.softChars}자·${LIMITS.softLines}줄)보다 깁니다. 회사 소개 문구라 배포는 됩니다. 앞 ${LIMITS.visibleHead}자 뒤는 받는 폰에서 접힐 수 있습니다.`);
+  } else if (longest > LIMITS.softChars || mostLines > LIMITS.softLines) {
+    add("e", `보내는 글이 ${longest}자·${mostLines}줄입니다. ${LIMITS.softChars}자·${LIMITS.softLines}줄 이하로 줄이세요(길게 써도 되는 것은 회사 소개 두 문구 ${INTRO_KEYS.join("·")} 뿐).`);
+  } else {
+    // 지금 직원들의 이름은 짧지만, 이름이 긴 직원이 들어오면 같은 문구가 길어진다(앱이 경고하는 상한은 이름+직함 10자).
+    const worstCase = render(body, WORST, CHECK_HOURS[0], PROMISE_LONGEST);
+    if ((staff.name + staff.title).length < (WORST.name + WORST.title).length && worstCase.length > LIMITS.softChars) {
+      add("w", `이름이 긴 담당자(${WORST.name} ${WORST.title})가 들어오면 ${worstCase.length}자로 짧은 안내 기준(${LIMITS.softChars}자)을 넘습니다.`);
+    }
   }
   // 접혀도 보이는 앞부분: 약속이 있는 판은 약속 시점이, 없는 판은 보낸 사람이 들어 있어야 한다(앱 시험과 같은 세 판으로 본다)
   const hasPromise = body.includes("{약속시점}");
@@ -546,29 +593,36 @@ function checkTemplate(t, index) {
       add("w", `언제 연락하겠다는 약속이 앞 ${LIMITS.visibleHead}자 밖에 있습니다. 문자가 접히면 안 보입니다.`); break;
     }
     if (!hasPromise && staff.name && !head.includes(staff.name)) {
-      add("w", `누가 보냈는지(담당자 이름)가 앞 ${LIMITS.visibleHead}자 밖에 있습니다. 문자가 접히면 안 보입니다.`); break;
+      add("e", `누가 보냈는지(담당자 이름)가 앞 ${LIMITS.visibleHead}자 밖에 있습니다. 문자가 접히면 안 보입니다(JENA MAIN 10-01: 오류로 유지).`); break;
     }
   }
-  // 답장을 청하는 문장은 넣지 않는다(2026-09-30 대표 지시 · 개정 14). 다음 연락은 문자에 적은 약속 시각에 우리가 전화로 한다.
-  if (/답 ?주세요|답장 ?주세요|답 주시면|문자로 주세요/.test(body)) {
-    add("e", "답장을 청하는 문장(\"~ 답 주세요\")은 넣지 않습니다(2026-09-30 대표 지시). 다음 연락은 약속 시각에 전화로 합니다.");
+  // 답장을 청하는 문장은 넣지 않는다(2026-09-30 대표 지시 · 개정 14). 다음 연락은 우리가 전화로 한다.
+  if (REPLY_ASK.test(body)) {
+    add("e", "답장을 청하는 문장(\"~ 답 주세요\" · \"문자 주세요\")은 넣지 않습니다(2026-09-30 대표 지시). 다음 연락은 우리가 전화로 합니다.");
   }
-  for (const b of BANNED) if (body.includes(b)) add("e", `"${b}" 는 넣지 않습니다. 정책자금 사칭 문자와 구분이 어려워집니다.`);
+  // 주소: 허용한 두 주소만, 글자 그대로. 나머지 주소는 하나하나 짚어 막는다.
+  const found = splitUrls(body);
+  for (const u of found.urls) {
+    if (!URL_ALLOW.includes(u)) add("e", `주소 "${u}" 는 넣지 않습니다(정책자금 사칭 문자와 구분이 어려워집니다). 넣을 수 있는 주소는 ${URL_ALLOW.join(" · ")} 뿐이고, 글자 그대로 쓴 뒤 띄어 쓰거나 줄을 바꿉니다.`);
+  }
+  const rest = found.rest.toLowerCase();
+  for (const b of BANNED) if (rest.includes(b)) add("e", `"${b}" 는 넣지 않습니다. 정책자금 사칭 문자와 구분이 어려워집니다.`);
+  // 휴대폰 번호는 글에 박지 않는다(배포처는 주소만 알면 읽히고, 모든 직원 문자에 같은 번호가 나간다). 담당자 번호는 {담당자연락처}.
+  if (PHONE_RE.test(body)) add("e", "휴대폰 번호는 글에 넣지 않습니다. 담당자 번호는 {담당자연락처} 로 넣으면 각 폰 마이페이지의 번호가 들어갑니다.");
   if (MONEY.test(body)) add("e", "금액 숫자는 넣지 않습니다(광고로 분류될 수 있습니다).");
   // 제나 금지어(검문 없이 전 직원 폰으로 나가지 않게 · JENA D-136)
-  for (const w of COPY_BANNED) if (body.includes(w)) add("e", `"${w}" 는 넣지 않습니다(제나 금지어). 바꾼 문구는 제나 검문을 거쳐 배포하세요.`);
+  for (const w of COPY_BANNED) if (copyHas(body, w)) add("e", `"${w}" 는 넣지 않습니다(제나 금지어). 바꾼 문구는 제나 검문을 거쳐 배포하세요.`);
   for (const w of COPY_CHECK) if (body.includes(w)) add("w", `"${w}" 가 들어 있습니다. 근거가 확인된 표현인지 제나 검문을 받은 뒤 배포하세요.`);
   if (MAX_AMOUNT.test(body)) add("e", "\"최대 O억\" 같은 금액 약속은 넣지 않습니다(제나 rules/04).");
   if (!body.startsWith(BRAND)) add("e", `문구는 ${BRAND} 로 시작해야 합니다(저장 안 된 번호의 문자가 사칭 문자와 같은 모양이 되지 않게 · 09-25 검문 C3).`);
   else if (!body.startsWith(BRAND + "\n대표님, ")) add("w", `첫 줄은 ${BRAND} 만 쓰고, 둘째 줄을 「대표님, 」으로 시작하세요(2026-09-30 대표 지시).`);
-  for (const w of PHOTO_ONLY) if (body.includes(w)) add("w", `"${w}" 는 사진에 이미 있습니다. 글에서 빼세요.`);
-  if (!body.endsWith("{담당자명} {담당자직함}")) add("w", "마지막 줄을 담당자 서명으로 끝내는 것을 권합니다.");
   for (const w of WEAK) if (body.includes(w)) add("w", `"${w}" 는 부탁하거나 스스로를 낮추는 말입니다. 알려 드리는 말투로 바꾸는 것을 권합니다.`);
   if (/[?？]/.test(body)) add("w", "물음표로 묻는 문장이 있습니다. 답을 기다리지 않고 알려 드리는 문장으로 쓰는 것을 권합니다.");
   if (body.includes("'진행'") || body.includes("‘진행’")) add("e", "\"'진행' 답장\" 처럼 계약 의사를 문자로 받지 않습니다(계약은 미팅에서 · 직원 매뉴얼 4-1).");
   for (const w of ["되는 것만", "안 되는 건", "소진되면 접수가 마감"]) if (body.includes(w)) add("w", `"${w}" 는 결과나 마감을 단정하는 말입니다(제나 검문 C1). 한정 어미로 바꾸세요.`);
   if (body.includes("재신청이 막히") && !body.includes("재신청이 막히는 자금도 있어")) add("w", "재신청 제한은 모든 자금에 해당하지 않습니다. \"재신청이 막히는 자금도 있어\" 처럼 한정 어미를 붙이세요.");
-  // 개정 17 규칙: 약속 없는 판에는 추천·정리·다시 연락 약속이 없고, 약속 있는 판에는 약속 시점이 있고, 부재 판은 통화가 있었다고 쓰지 않는다
+  // 약속 있는 판·없는 판 규칙(개정 17에서 생김 · 이름 꼬리표로 알아본다): 약속 없는 판에는 추천·정리·다시 연락 약속이 없고,
+  // 약속 있는 판에는 약속 시점이 있고, 부재 판은 통화가 있었다고 쓰지 않는다
   const isPlain = (t.key || "").endsWith("_plain") || name.includes("(약속 없음)");
   if (isPlain) {
     const left = PROMISE_WORDS.filter((w) => body.includes(w));
@@ -576,8 +630,13 @@ function checkTemplate(t, index) {
   } else if (/\((정리 후 연락|다시 전화)\)/.test(name) && !hasPromise) {
     add("w", "약속 있는 판인데 {약속시점} 이 없습니다. 팝업에서 날짜·시각을 고르지 못합니다.");
   }
-  if (((t.key || "").startsWith("no_answer") || name.includes("부재")) && /방금 통화|방금 전화|통화드린|말씀하신/.test(body)) {
+  const isNoAnswer = (t.key || "").startsWith("no_answer") || name.includes("부재");
+  if (isNoAnswer && /방금 통화|방금 전화|통화드린|말씀하신/.test(body)) {
     add("w", "부재 문구에 통화가 있었다는 말(방금 통화·통화드린·말씀하신)이 있습니다. 받지 않은 분께는 사실과 다릅니다.");
+  }
+  // 첫 접촉에서 「센터」를 공공기관으로 오해하지 않게 부재 문구는 민간 회사임을 밝힌다(앱 BuiltInCatalogTest 와 같은 규칙 · 9/25 검문)
+  if (isNoAnswer && !body.includes("민간")) {
+    add("w", "부재 문구에 민간 회사라는 말(예: 「민간 컨설팅 회사」)이 없습니다. 첫 연락에서 공공기관으로 오해하지 않게 밝히세요.");
   }
   // 규칙 값: 앱이 모르는 값이면 묶음 전체를 거절한다. 받지 못한 수신 전화 규칙은 쓰지 않는다(9/25 검문 C-66).
   for (const rule of t.rules || []) {
@@ -759,11 +818,13 @@ function drawPreview() {
     : "");
 
   const lines = text.split("\n").length;
-  const cls = (v, max) => (v > max ? "bad" : v > max * 0.92 ? "warn" : "ok");
+  // 보내는 글은 짧은 안내 기준(320자·12줄)을 넘으면 주황(경고만), 원본은 앱 상한(1000자)을 넘으면 빨강(배포 막힘).
+  const raw = (t.body || "").trim().length;
+  const soft = (v, max) => (v > max ? "warn" : "ok");
   $("counts").innerHTML =
-    `<span>길이 <b class="${cls(text.length, LIMITS.maxChars)}">${text.length}</b> / ${LIMITS.maxChars}자</span>` +
-    `<span>줄 <b class="${cls(lines, LIMITS.maxLines)}">${lines}</b> / ${LIMITS.maxLines}줄</span>` +
-    `<span class="hint">${esc(staff.name + " " + staff.title)} 기준</span>`;
+    `<span>길이 <b class="${soft(text.length, LIMITS.softChars)}">${text.length}</b>자 · <b class="${soft(lines, LIMITS.softLines)}">${lines}</b>줄</span>` +
+    `<span>원본 <b class="${raw > LIMITS.maxBody ? "bad" : raw > LIMITS.maxBody * 0.92 ? "warn" : "ok"}">${raw}</b> / ${LIMITS.maxBody}자</span>` +
+    `<span class="hint">${esc(staff.name + " " + staff.title)} 기준 · 짧은 안내는 ${LIMITS.softChars}자·${LIMITS.softLines}줄</span>`;
 
   const issues = checkTemplate(t, state.sel);
   $("issues").innerHTML = issues.map((x) => `<li class="${x.level}">${esc(x.text)}</li>`).join("");
@@ -780,7 +841,7 @@ function drawTemplatesBar() {
   $("btn-publish").textContent = !state.canPublish ? "배포 토큰 없음" : errors > 0 ? `고칠 곳 ${errors}군데` : "직원 폰에 배포하기";
   $("btn-publish").title = !state.canPublish ? "서버에 배포용 GitHub 토큰(CBM_GITHUB_TOKEN)이 없습니다. 파일로 내려받아 내 맥에서 배포하세요." : "";
   const shared = state.roster.shared.length;
-  $("photo-note").textContent = `담당자 명함과 회사 사진이 이 글과 함께 한 통으로 나갑니다(지금 회사 사진 ${shared}장${shared ? ", 명함 뒤에 순서대로" : " — 명함만 나갑니다"}). 명함에 있는 대표번호·주소·홈페이지는 글에 다시 쓰지 않습니다.`;
+  $("photo-note").textContent = `담당자 명함과 회사 사진이 이 글과 함께 한 통으로 나갑니다(지금 회사 사진 ${shared}장${shared ? ", 명함 뒤에 순서대로" : " — 명함만 나갑니다"}). 회사 소개(대표번호·주소·홈페이지·수상)는 글에도 그대로 씁니다. 감사·부탁·답장 요청 없이 자신 있게 알립니다(10-01 대표).`;
 }
 
 function drawTemplates() { drawList(); drawEditor(); drawPreview(); drawTemplatesBar(); drawTabs(); }
