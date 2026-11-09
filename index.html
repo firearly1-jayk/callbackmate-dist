@@ -92,6 +92,10 @@
   .bar .titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .bar .page { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.15; }
   .bar .rev { color: var(--text-2); font-size: 13px; }
+  /* 「직원이 폰에서 문구 고치기·만들기」 켬·끔(앱 v0.31.0) — 문구 탭 머리 */
+  .bar .pe { margin-top: 6px; gap: 6px; }
+  .bar .pe .rev { font-weight: 600; color: var(--text); }
+  .bar .pe .chip { padding: 3px 13px; font-size: 13px; }
   .bar .spacer { flex: 1; }
   section.tab { padding-bottom: 56px; }
   main { display: grid; grid-template-columns: 320px minmax(0, 1fr) 360px; gap: 16px; padding: 16px 22px 0; align-items: start; max-width: 1480px; margin: 0 auto; }
@@ -115,8 +119,8 @@
   .mv button { padding: 1px 7px; font-size: 10px; line-height: 16px; border-radius: 6px; background: var(--fill); }
 
   /* 입력 */
-  label.f { display: block; margin-bottom: 16px; }
-  label.f > span { display: block; font-size: 12.5px; color: var(--text-2); margin-bottom: 6px; font-weight: 600; }
+  label.f, div.f { display: block; margin-bottom: 16px; }
+  label.f > span, div.f > span { display: block; font-size: 12.5px; color: var(--text-2); margin-bottom: 6px; font-weight: 600; }
   input[type=text], input[type=password], textarea, select {
     font: inherit; font-size: 15px; width: 100%; border: 1px solid transparent; border-radius: var(--r-md); padding: 10px 12px;
     background: var(--fill); color: var(--text); transition: box-shadow .15s ease, background .15s ease, border-color .15s ease;
@@ -301,6 +305,7 @@
       <h2>여기서 고치면 폰에는 이렇게 갑니다</h2>
       <ul class="how">
         <li><b>문구</b> — 「문구」 탭에서 배포하면 직원 폰이 앱을 열거나 통화 팝업이 닫힐 때 받아 갑니다. 늦어도 <b>1시간</b>.</li>
+        <li><b>직원이 폰에서 고친 문구</b> — 「직원이 폰에서 문구 고치기·만들기」가 켬이면(<b>앱 v0.31.0부터</b>) 직원이 고친 본문은 여기서 같은 문구를 바꿔도 그 폰에서 그대로 나갑니다(폰에는 「공통 문구 바뀜」 표시). 새 글을 그 폰들에도 보내려면 그 문구의 「직원 수정본 되돌리기」를 누르고 배포합니다.</li>
         <li><b>직원·명함·회사 사진</b> — 「직원·명함」·「회사 사진」 탭에서 저장하면 같은 방법으로 <b>1시간</b> 안에 갑니다. <b>앱 v0.26 이상</b>인 폰만 사진이 바뀝니다(그 아래 버전은 설치 파일 안의 사진을 계속 씁니다).</li>
         <li><b>앱 자체</b> — 새 버전을 올리면 폰이 <b>6시간</b>마다 확인해 설치를 권합니다(v0.20 이상). 그보다 낮은 폰은 설치 링크로 한 번 다시 깔아야 그 뒤로 자동입니다.</li>
         <li>폰은 아무것도 되돌려 보내지 않습니다(어느 폰이 어디까지 받았는지는 여기서 알 수 없습니다). 확인은 그 폰의 템플릿 탭 맨 위와 설정 화면에서.</li>
@@ -315,14 +320,20 @@
 <!-- ───────── 문구 ───────── -->
 <section class="tab" id="tab-templates" hidden>
   <div class="bar">
-    <div class="titles"><h2 class="page">문구</h2><span class="rev" id="revline">불러오는 중…</span><span class="rev" id="managedline"></span></div>
+    <div class="titles"><h2 class="page">문구</h2><span class="rev" id="revline">불러오는 중…</span><span class="rev" id="managedline"></span>
+      <div class="row pe" role="group" aria-labelledby="pe-label">
+        <span class="rev" id="pe-label">직원이 폰에서 문구 고치기·만들기</span>
+        <button type="button" class="chip" id="pe-on" aria-pressed="false">켬</button>
+        <button type="button" class="chip" id="pe-off" aria-pressed="false">끔</button>
+      </div>
+      <span class="rev" id="pe-note"></span></div>
     <span class="spacer"></span>
     <button id="btn-download">파일로 내려받기</button>
     <button class="primary" id="btn-publish">직원 폰에 배포하기</button>
   </div>
   <main>
     <section class="panel">
-      <h2>문구 목록 <span class="hint">· 위에 있는 것이 팝업에서 먼저 보입니다</span></h2>
+      <h2>문구 목록 <span class="hint">· 위에 있는 것이 팝업에서 먼저 보입니다(직원이 ★ 누른 문구는 「추천」 바로 아래에 먼저 · 앱 v0.31.0부터)</span></h2>
       <ul class="list" id="list"></ul>
       <ul class="issues" id="catalog-issues"></ul>
       <div class="row" style="margin-top:12px">
@@ -353,7 +364,7 @@
       <div class="counts" id="counts"></div>
       <ul class="issues" id="issues"></ul>
       <p class="note" id="photo-note">담당자 명함과 회사 사진이 이 글과 함께 한 통으로 나갑니다. 회사 소개(대표번호·주소·홈페이지·수상)는 글에도 그대로 씁니다. 감사·부탁·답장 요청 없이 자신 있게 알립니다(10-01 대표).</p>
-      <p class="note"><b>어떤 전화에 쓸지</b>를 고른 문구는 그 통화 뒤 팝업 맨 위 「추천」 칸에 뜹니다. 걸려 온 전화 뒤에는 미리 골라져 있고, 내가 건 전화 뒤에는 받았는지 앱이 모르므로 직원이 고릅니다(앱 v0.29.3). 나머지 문구는 이 목록 순서대로 그 아래에 모두 나옵니다.</p>
+      <p class="note"><b>어떤 전화에 쓸지</b>를 고른 문구는 그 통화 뒤 팝업 맨 위 「추천」 칸에 뜹니다. 걸려 온 전화 뒤에는 미리 골라져 있고, 내가 건 전화 뒤에는 받았는지 앱이 모르므로 직원이 고릅니다(앱 v0.29.3). 나머지 문구는 이 목록 순서대로 그 아래에 나옵니다. 앱 v0.31.0부터는 직원이 폰 「템플릿」 탭에서 ★ 누른 문구가 「추천」 바로 아래에 먼저 보이고(내가 건 전화 뒤에는 부재 문구도 함께), 나머지는 「다른 문구 보기」로 접힙니다. ★이 하나도 없는 폰은 지금처럼 모두 펼쳐 보입니다.</p>
     </section>
   </main>
 </section>
@@ -518,15 +529,29 @@ const COPY_CHECK = ["무료", "정부", "보장", "누구나", "1위", "마감",
 // 금지어를 품은 정상 낱말. 「소상공인」의 「공인」은 「정부 공인」 같은 기관 사칭 말이 아니다(개정 18 「소상공인정책자금」).
 // COPY_BANNED 는 앱 CopyGuard.BANNED 와 같아야 하므로(BuiltInCatalogTest 가 대조) 목록은 그대로 두고, 검사할 때만 이 낱말을 지운다.
 const COPY_EXCEPT = { "공인": ["소상공인"] };
-/** 금지어 w 가 body 에 있는지. 예외 낱말은 줄바꿈으로 바꿔 지운다(앞뒤 글자가 붙어 새 금지어가 생기지 않게). */
-const copyHas = (body, w) => (COPY_EXCEPT[w] || []).reduce((s, x) => s.split(x).join("\n"), body).includes(w);
+// 띄어쓰기를 무시하고도 견줄 금지어의 최소 길이(공백을 뺀 글자 수). 「한도」·「공인」 같은 짧은 낱말까지 붙여 보면
+// 「한 도시」처럼 낱말 사이에서 걸리므로 4자 이상만 본다(검토 C7 · 앱 CopyLint.COPY_SQUASH_MIN 과 같다).
+const COPY_SQUASH_MIN = 4;
+/** 공백(JS 공백 묶음 · 줄바꿈 포함)을 모두 뺀 글 */
+const squash = (s) => s.replace(/\s+/g, "");
+/**
+ * 금지어 w 가 body 에 있는지. 목록 그대로 있거나, w 가 공백을 빼고 4자 이상이면 띄어쓰기를 무시하고 있는지 본다
+ * (「즉시승인」·「성공 보수」처럼 목록과 띄어쓰기만 다른 글 · 검토 C7). 예외 낱말은 공백이 아닌 표시(U+0000)로 바꿔 지운다 —
+ * 공백을 빼도 앞뒤 글자가 붙어 새 금지어가 생기지 않게.
+ */
+const copyHas = (body, w) => {
+  const s = (COPY_EXCEPT[w] || []).reduce((s, x) => s.split(x).join("\u0000"), body);
+  return s.includes(w) || (squash(w).length >= COPY_SQUASH_MIN && squash(s).includes(squash(w)));
+};
 const MAX_AMOUNT = /최대\s*\d[\d,.]*\s*(억|천만|백만|만)/;
 const BRAND = "[이룸경영지원센터]";
 // 대표 지시 2026-10-01: 회사 소개(대표번호·주소·홈페이지·수상·사업자등록번호)는 글에도 그대로 쓴다.
 // 예전의 「사진에 이미 있으니 글에서 빼세요」 경고(PHOTO_ONLY)와 「마지막 줄은 서명」 권고는 없앴다.
 // 답장을 청하는 문장(2026-09-30 대표 지시 · 개정 14 · 10-01 「답장 요청 없이」). 앱 BuiltInCatalogTest 의 목록에 「문자 주세요」 꼴과 회신·답변 요청을 더했다.
 const REPLY_ASK = /(?:답|답장|답변|회신|문자로?) ?(?:주세요|주시면|부탁)/;
-const MONEY = /\d[\d,.]*\s*(억|천만|백만|만|천)?\s*원/;
+// 금액 숫자. 띄어쓰기(NBSP·U+3000 포함)는 건너도 줄바꿈(LF · CR · U+2028 · U+2029)은 건너지 않는다 —
+// 「상담시간 10:00~19:00」 다음 줄이 「원하시는 …」으로 시작하면 금액으로 잡던 것 고침(검토 C6 · 앱 CopyLint.MONEY_SOURCE 와 같은 글자).
+const MONEY = /\d[\d,.]*(?:(?![\n\r\u2028\u2029])\s)*(억|천만|백만|만|천)?(?:(?![\n\r\u2028\u2029])\s)*원/;
 const KEY_RE = /^[a-z0-9][a-z0-9_-]*$/;
 const WORST = { name: "남궁민수", title: "수석컨설턴트" };  // 이름+직함 10자, 앱의 경고 상한
 // {약속시점}: 고르지 않는 경로에서 이 시각부터 "다음 영업일 오전까지". 앱 TemplateVariables.DEADLINE_CUTOFF_HOUR=18 과 같다
@@ -543,9 +568,16 @@ const WEAK = ["부탁드", "죄송", "양해", "괜찮으시", "조르지", "번
 // (앱 BuiltInCatalogTest 「약속 없는 판에는 추천·정리·다시 연락 약속과 약속 시점이 없다」와 같은 목록)
 const PROMISE_WORDS = ["정리해", "추려", "골라", "추천", "검토해", "연락드리", "전화드리겠", "보내드리", "알려드리", "안내하겠", "목록", "확인하신", "접수 가능한 자금", "{약속시점}"];
 // 중앙 관리(앱 v0.29.5 · 2026-10-02 대표 「앞으로는 내가 모두 템플릿을 중앙에서 제어」). 이 화면이 올리는 templates.json 에는
-// 언제나 "managed": true 가 name 바로 뒤에 들어간다(payload) — 끄는 스위치는 두지 않는다. v0.29.5 이상 폰은 이 묶음과 똑같이
-// 맞추고(직원 수정 덮어쓰기 · 폰 전용 문구와 문구 사진 정리 · 규칙은 rules 그대로 켜짐·항상) 템플릿·규칙 고치기를 잠근다. 옛 앱은 무시한다.
-const MANAGED_LINE = "중앙 관리: 켬 — 직원 폰에서 문구·규칙을 고칠 수 없음(앱 v0.29.5부터)";
+// 언제나 "managed": true 가 name 바로 뒤에 들어간다(payload) — 중앙 관리 자체를 끄는 스위치는 두지 않는다. v0.29.5 이상 폰은 이 묶음과
+// 똑같이 맞추고(문구 사진 정리 · 규칙은 rules 그대로 켜짐·항상) 규칙 고치기를 잠근다. 옛 앱은 무시한다.
+// 직원이 폰에서 문구를 고치고 만드는 것은 "phoneEdits"(앱 v0.31.0 · ADR-013 · 2026-10-14 대표 「사람들마다 약간의 내용들은 다를 수 있으니
+// 수정을 하도록해도되」)가 정한다. 켬이면 받은 문구의 본문 수정본과 폰 전용 문구가 남고, 끔이면 v0.29.5~v0.30.x 처럼 덮어쓰고 지운다.
+// 폰은 키가 없으면 마지막으로 받은 값을 쓴다(앱 기본: 켬) — 그래서 이 화면은 늘 true·false 를 적고, 불러온 묶음에 값이 없으면 고르기 전에는 배포하지 않는다.
+const MANAGED_LINE = "중앙 관리: 켬 — 직원 폰의 문구 목록·규칙은 이 화면 그대로(앱 v0.29.5부터) · 문구 본문 고치기는 아래 스위치(앱 v0.31.0부터)";
+// 문구별 「직원 수정본 되돌리기」(templates[].resetEdits · 앱 v0.31.0 · 0 이상 정수). 폰은 문구마다 마지막으로 본 값을 기억하고, 값이 커지면
+// 그 문구의 직원 수정본을 한 번 회사 문구로 되돌린다. 앱이 Int 로 읽으므로 그 범위를 넘는 값은 묶음 전체를 거절당하지 않게 싣지 않는다.
+const RESET_MAX = 2147483647;
+const validReset = (n) => Number.isInteger(n) && n >= 0 && n <= RESET_MAX;
 
 // ---- 앱에 박힌 값(「기능」 탭이 그대로 보여 준다) ----
 // 앱을 바꾸면 여기도 바꾼다. scripts/tests/console_check.js 가 앱 소스(app/src/*/kotlin)에서 같은 값을 읽어 다르면 실패한다.
@@ -561,6 +593,7 @@ const APP_FACTS = {
   // 폰마다 정하는 것의 처음 값(AutomationSettings 기본값 · 사내 배포판은 처음 실행 때 AppInitializer 가 자동 보내기·업무 발신번호를 채운다)
   automation: false, callMonitoring: false, testMode: true, excludeContacts: false, attachStaffCard: true, attachCompanyImage: true,
   autoSendSeeded: true, senderSeeded: true,
+  phoneEditsDefault: true,      // AutomationSettings.templateCatalogPhoneEdits — 묶음에 phoneEdits 가 한 번도 없었던 폰의 값(앱 v0.31.0)
 };
 
 // ---- 사진·명부 규칙 (docs/ADR-010, domain/images/) ----
@@ -581,6 +614,9 @@ let state = {
   name: "", revision: 0, templates: [], staff: [], sel: 0, dirty: false, source: "", canPublish: true,
   // 불러온 개정이 이미 중앙 관리(managed: true)인가. 아니면(개정 18 까지) 다음 배포부터 켜진다고 알린다.
   managed: false,
+  // 직원이 폰에서 문구 고치기·만들기(phoneEdits): true · false · null(불러온 묶음에 값이 없음 — 고르기 전에는 배포하지 않는다).
+  // livePhoneEdits 는 배포처에 올라가 있는 값(「기능」 탭 · 끔으로 바꿀 때만 확인 창), publishedReset 은 문구 키마다 배포된 resetEdits.
+  phoneEdits: null, livePhoneEdits: null, publishedReset: {},
   // 명부·사진(staff.json 형식 2). files 는 배포처에 있는 사진(base64), staged 는 아직 안 올린 새 사진.
   roster: { format: 2, revision: 0, staff: [], shared: [] }, rosterFormat: 0, files: {}, staged: {}, rosterDirty: false, rosterSupported: true,
   version: null, release: null,
@@ -631,7 +667,11 @@ function sharesStaff(a, b) {
 
 function checkTemplate(t, index) {
   const issues = [];
-  const add = (level, text) => issues.push({ level, text });
+  // code·subject: 문구 본문 규칙의 이름표(앱 v0.31.0 CopyLint 와 같은 이름 · 화면 글 text 는 그대로). 이슈 정체는 (code, subject) —
+  // subject 는 걸린 낱말·주소·조각이고, 잰 값 규칙(길이·줄·앞부분·중괄호 등)은 code 만 쓴다(null).
+  // 이름·키·규칙·받는 직원·원본 길이 검사는 앱이 따로 막으므로 code 가 없다(null).
+  // scripts/tests/fixtures/copylint_cases.json 을 console_check.js(이 함수)와 앱 CopyLintTest 가 함께 대조한다.
+  const add = (level, text, code, subject) => issues.push({ level, text, code: code || null, subject: subject === undefined ? null : subject });
   const name = (t.name || "").trim();
   if (!name) add("e", "문구 이름이 비었습니다.");
   if (name.length > LIMITS.maxName) add("e", `문구 이름이 ${LIMITS.maxName}자를 넘습니다.`);
@@ -659,18 +699,18 @@ function checkTemplate(t, index) {
     mostLines = Math.max(mostLines, text.split("\n").length);
     if (/[{}]/.test(text)) braces = true;
   }
-  if (braces) add("e", "치환되지 않는 중괄호가 있습니다. 변수 이름을 확인하세요.");
+  if (braces) add("e", "치환되지 않는 중괄호가 있습니다. 변수 이름을 확인하세요.", "BRACES");
   // 짧은 안내 기준(320자·12줄): 회사 소개 두 문구(INTRO_KEYS)는 알리기만 하고(2026-10-01 대표 · 개정 18), 나머지 문구는 막는다.
   const intro = INTRO_KEYS.includes(t.key || "");
   if ((longest > LIMITS.softChars || mostLines > LIMITS.softLines) && intro) {
-    add("w", `보내는 글이 ${longest}자·${mostLines}줄로 짧은 안내 기준(${LIMITS.softChars}자·${LIMITS.softLines}줄)보다 깁니다. 회사 소개 문구라 배포는 됩니다. 앞 ${LIMITS.visibleHead}자 뒤는 받는 폰에서 접힐 수 있습니다.`);
+    add("w", `보내는 글이 ${longest}자·${mostLines}줄로 짧은 안내 기준(${LIMITS.softChars}자·${LIMITS.softLines}줄)보다 깁니다. 회사 소개 문구라 배포는 됩니다. 앞 ${LIMITS.visibleHead}자 뒤는 받는 폰에서 접힐 수 있습니다.`, "LENGTH");
   } else if (longest > LIMITS.softChars || mostLines > LIMITS.softLines) {
-    add("e", `보내는 글이 ${longest}자·${mostLines}줄입니다. ${LIMITS.softChars}자·${LIMITS.softLines}줄 이하로 줄이세요(길게 써도 되는 것은 회사 소개 두 문구 ${INTRO_KEYS.join("·")} 뿐).`);
+    add("e", `보내는 글이 ${longest}자·${mostLines}줄입니다. ${LIMITS.softChars}자·${LIMITS.softLines}줄 이하로 줄이세요(길게 써도 되는 것은 회사 소개 두 문구 ${INTRO_KEYS.join("·")} 뿐).`, "LENGTH");
   } else {
     // 지금 직원들의 이름은 짧지만, 이름이 긴 직원이 들어오면 같은 문구가 길어진다(앱이 경고하는 상한은 이름+직함 10자).
     const worstCase = render(body, WORST, CHECK_HOURS[0], PROMISE_LONGEST);
     if ((staff.name + staff.title).length < (WORST.name + WORST.title).length && worstCase.length > LIMITS.softChars) {
-      add("w", `이름이 긴 담당자(${WORST.name} ${WORST.title})가 들어오면 ${worstCase.length}자로 짧은 안내 기준(${LIMITS.softChars}자)을 넘습니다.`);
+      add("w", `이름이 긴 담당자(${WORST.name} ${WORST.title})가 들어오면 ${worstCase.length}자로 짧은 안내 기준(${LIMITS.softChars}자)을 넘습니다.`, "LONG_NAME");
     }
   }
   // 접혀도 보이는 앞부분: 약속이 있는 판은 약속 시점이, 없는 판은 보낸 사람이 들어 있어야 한다(앱 시험과 같은 세 판으로 본다)
@@ -678,53 +718,54 @@ function checkTemplate(t, index) {
   for (const v of variants) {
     const head = render(body, staff, v.hour, v.promise).slice(0, LIMITS.visibleHead);
     if (hasPromise && ![v.promise, "오늘 안에", DEADLINE_TOMORROW].filter(Boolean).some((x) => head.includes(x))) {
-      add("w", `언제 연락하겠다는 약속이 앞 ${LIMITS.visibleHead}자 밖에 있습니다. 문자가 접히면 안 보입니다.`); break;
+      add("w", `언제 연락하겠다는 약속이 앞 ${LIMITS.visibleHead}자 밖에 있습니다. 문자가 접히면 안 보입니다.`, "PROMISE_HEAD"); break;
     }
     if (!hasPromise && staff.name && !head.includes(staff.name)) {
-      add("e", `누가 보냈는지(담당자 이름)가 앞 ${LIMITS.visibleHead}자 밖에 있습니다. 문자가 접히면 안 보입니다(JENA MAIN 10-01: 오류로 유지).`); break;
+      add("e", `누가 보냈는지(담당자 이름)가 앞 ${LIMITS.visibleHead}자 밖에 있습니다. 문자가 접히면 안 보입니다(JENA MAIN 10-01: 오류로 유지).`, "SENDER_HEAD"); break;
     }
   }
   // 답장을 청하는 문장은 넣지 않는다(2026-09-30 대표 지시 · 개정 14). 다음 연락은 우리가 전화로 한다.
   if (REPLY_ASK.test(body)) {
-    add("e", "답장을 청하는 문장(\"~ 답 주세요\" · \"문자 주세요\")은 넣지 않습니다(2026-09-30 대표 지시). 다음 연락은 우리가 전화로 합니다.");
+    add("e", "답장을 청하는 문장(\"~ 답 주세요\" · \"문자 주세요\")은 넣지 않습니다(2026-09-30 대표 지시). 다음 연락은 우리가 전화로 합니다.", "REPLY_ASK");
   }
   // 주소: 허용한 두 주소만, 글자 그대로. 나머지 주소는 하나하나 짚어 막는다.
   const found = splitUrls(body);
   for (const u of found.urls) {
-    if (!URL_ALLOW.includes(u)) add("e", `주소 "${u}" 는 넣지 않습니다(정책자금 사칭 문자와 구분이 어려워집니다). 넣을 수 있는 주소는 ${URL_ALLOW.join(" · ")} 뿐이고, 글자 그대로 쓴 뒤 띄어 쓰거나 줄을 바꿉니다.`);
+    if (!URL_ALLOW.includes(u)) add("e", `주소 "${u}" 는 넣지 않습니다(정책자금 사칭 문자와 구분이 어려워집니다). 넣을 수 있는 주소는 ${URL_ALLOW.join(" · ")} 뿐이고, 글자 그대로 쓴 뒤 띄어 쓰거나 줄을 바꿉니다.`, "URL_NOT_ALLOWED", u);
   }
   const rest = found.rest.toLowerCase();
-  for (const b of BANNED) if (rest.includes(b)) add("e", `"${b}" 는 넣지 않습니다. 정책자금 사칭 문자와 구분이 어려워집니다.`);
+  for (const b of BANNED) if (rest.includes(b)) add("e", `"${b}" 는 넣지 않습니다. 정책자금 사칭 문자와 구분이 어려워집니다.`, "URL_FRAGMENT", b);
   // 휴대폰 번호는 글에 박지 않는다(배포처는 주소만 알면 읽히고, 모든 직원 문자에 같은 번호가 나간다). 담당자 번호는 {담당자연락처}.
-  if (PHONE_RE.test(body)) add("e", "휴대폰 번호는 글에 넣지 않습니다. 담당자 번호는 {담당자연락처} 로 넣으면 각 폰 마이페이지의 번호가 들어갑니다.");
-  if (MONEY.test(body)) add("e", "금액 숫자는 넣지 않습니다(광고로 분류될 수 있습니다).");
+  if (PHONE_RE.test(body)) add("e", "휴대폰 번호는 글에 넣지 않습니다. 담당자 번호는 {담당자연락처} 로 넣으면 각 폰 마이페이지의 번호가 들어갑니다.", "PHONE");
+  if (MONEY.test(body)) add("e", "금액 숫자는 넣지 않습니다(광고로 분류될 수 있습니다).", "MONEY");
   // 제나 금지어(검문 없이 전 직원 폰으로 나가지 않게 · JENA D-136)
-  for (const w of COPY_BANNED) if (copyHas(body, w)) add("e", `"${w}" 는 넣지 않습니다(제나 금지어). 바꾼 문구는 제나 검문을 거쳐 배포하세요.`);
-  for (const w of COPY_CHECK) if (body.includes(w)) add("w", `"${w}" 가 들어 있습니다. 근거가 확인된 표현인지 제나 검문을 받은 뒤 배포하세요.`);
-  if (MAX_AMOUNT.test(body)) add("e", "\"최대 O억\" 같은 금액 약속은 넣지 않습니다(제나 rules/04).");
-  if (!body.startsWith(BRAND)) add("e", `문구는 ${BRAND} 로 시작해야 합니다(저장 안 된 번호의 문자가 사칭 문자와 같은 모양이 되지 않게 · 09-25 검문 C3).`);
-  else if (!body.startsWith(BRAND + "\n대표님, ")) add("w", `첫 줄은 ${BRAND} 만 쓰고, 둘째 줄을 「대표님, 」으로 시작하세요(2026-09-30 대표 지시).`);
-  for (const w of WEAK) if (body.includes(w)) add("w", `"${w}" 는 부탁하거나 스스로를 낮추는 말입니다. 알려 드리는 말투로 바꾸는 것을 권합니다.`);
-  if (/[?？]/.test(body)) add("w", "물음표로 묻는 문장이 있습니다. 답을 기다리지 않고 알려 드리는 문장으로 쓰는 것을 권합니다.");
-  if (body.includes("'진행'") || body.includes("‘진행’")) add("e", "\"'진행' 답장\" 처럼 계약 의사를 문자로 받지 않습니다(계약은 미팅에서 · 직원 매뉴얼 4-1).");
-  for (const w of ["되는 것만", "안 되는 건", "소진되면 접수가 마감"]) if (body.includes(w)) add("w", `"${w}" 는 결과나 마감을 단정하는 말입니다(제나 검문 C1). 한정 어미로 바꾸세요.`);
-  if (body.includes("재신청이 막히") && !body.includes("재신청이 막히는 자금도 있어")) add("w", "재신청 제한은 모든 자금에 해당하지 않습니다. \"재신청이 막히는 자금도 있어\" 처럼 한정 어미를 붙이세요.");
+  for (const w of COPY_BANNED) if (copyHas(body, w)) add("e", `"${w}" 는 넣지 않습니다(제나 금지어). 바꾼 문구는 제나 검문을 거쳐 배포하세요.`, "BANNED", w);
+  for (const w of COPY_CHECK) if (body.includes(w)) add("w", `"${w}" 가 들어 있습니다. 근거가 확인된 표현인지 제나 검문을 받은 뒤 배포하세요.`, "CHECK", w);
+  if (MAX_AMOUNT.test(body)) add("e", "\"최대 O억\" 같은 금액 약속은 넣지 않습니다(제나 rules/04).", "MAX_AMOUNT");
+  if (!body.startsWith(BRAND)) add("e", `문구는 ${BRAND} 로 시작해야 합니다(저장 안 된 번호의 문자가 사칭 문자와 같은 모양이 되지 않게 · 09-25 검문 C3).`, "BRAND_FIRST");
+  else if (!body.startsWith(BRAND + "\n대표님, ")) add("w", `첫 줄은 ${BRAND} 만 쓰고, 둘째 줄을 「대표님, 」으로 시작하세요(2026-09-30 대표 지시).`, "BRAND_SECOND_LINE");
+  for (const w of WEAK) if (body.includes(w)) add("w", `"${w}" 는 부탁하거나 스스로를 낮추는 말입니다. 알려 드리는 말투로 바꾸는 것을 권합니다.`, "WEAK", w);
+  if (/[?？]/.test(body)) add("w", "물음표로 묻는 문장이 있습니다. 답을 기다리지 않고 알려 드리는 문장으로 쓰는 것을 권합니다.", "QUESTION");
+  if (body.includes("'진행'") || body.includes("‘진행’")) add("e", "\"'진행' 답장\" 처럼 계약 의사를 문자로 받지 않습니다(계약은 미팅에서 · 직원 매뉴얼 4-1).", "CONTRACT_REPLY");
+  for (const w of ["되는 것만", "안 되는 건", "소진되면 접수가 마감"]) if (body.includes(w)) add("w", `"${w}" 는 결과나 마감을 단정하는 말입니다(제나 검문 C1). 한정 어미로 바꾸세요.`, "ASSERTIVE", w);
+  if (body.includes("재신청이 막히") && !body.includes("재신청이 막히는 자금도 있어")) add("w", "재신청 제한은 모든 자금에 해당하지 않습니다. \"재신청이 막히는 자금도 있어\" 처럼 한정 어미를 붙이세요.", "REAPPLY");
   // 약속 있는 판·없는 판 규칙(개정 17에서 생김 · 이름 꼬리표로 알아본다): 약속 없는 판에는 추천·정리·다시 연락 약속이 없고,
   // 약속 있는 판에는 약속 시점이 있고, 부재 판은 통화가 있었다고 쓰지 않는다
   const isPlain = (t.key || "").endsWith("_plain") || name.includes("(약속 없음)");
   if (isPlain) {
     const left = PROMISE_WORDS.filter((w) => body.includes(w));
-    if (left.length) add("w", `약속 없는 판인데 추천·정리·연락을 약속하는 말(${left.join(", ")})이 들어 있습니다.`);
+    if (left.length) add("w", `약속 없는 판인데 추천·정리·연락을 약속하는 말(${left.join(", ")})이 들어 있습니다.`, "PLAIN_PROMISE");
   } else if (/\((정리 후 연락|다시 전화)\)/.test(name) && !hasPromise) {
-    add("w", "약속 있는 판인데 {약속시점} 이 없습니다. 팝업에서 날짜·시각을 고르지 못합니다.");
+    add("w", "약속 있는 판인데 {약속시점} 이 없습니다. 팝업에서 날짜·시각을 고르지 못합니다.", "PROMISE_MISSING");
   }
+  // 부재 문구: 키가 no_answer 로 시작하거나 이름에 「부재」(앱 isNoAnswerTemplate 과 같은 규칙 — 건 전화 뒤 팝업에서 접지 않는 문구)
   const isNoAnswer = (t.key || "").startsWith("no_answer") || name.includes("부재");
   if (isNoAnswer && /방금 통화|방금 전화|통화드린|말씀하신/.test(body)) {
-    add("w", "부재 문구에 통화가 있었다는 말(방금 통화·통화드린·말씀하신)이 있습니다. 받지 않은 분께는 사실과 다릅니다.");
+    add("w", "부재 문구에 통화가 있었다는 말(방금 통화·통화드린·말씀하신)이 있습니다. 받지 않은 분께는 사실과 다릅니다.", "NOANSWER_CALL");
   }
   // 첫 접촉에서 「센터」를 공공기관으로 오해하지 않게 부재 문구는 민간 회사임을 밝힌다(앱 BuiltInCatalogTest 와 같은 규칙 · 9/25 검문)
   if (isNoAnswer && !body.includes("민간")) {
-    add("w", "부재 문구에 민간 회사라는 말(예: 「민간 컨설팅 회사」)이 없습니다. 첫 연락에서 공공기관으로 오해하지 않게 밝히세요.");
+    add("w", "부재 문구에 민간 회사라는 말(예: 「민간 컨설팅 회사」)이 없습니다. 첫 연락에서 공공기관으로 오해하지 않게 밝히세요.", "NOANSWER_PRIVATE");
   }
   // 규칙 값: 앱이 모르는 값이면 묶음 전체를 거절한다. 받지 못한 수신 전화 규칙은 쓰지 않는다(9/25 검문 C-66).
   for (const rule of t.rules || []) {
@@ -797,7 +838,8 @@ function drawList() {
     if (i === state.sel) li.className = "sel";
     const who = (t.staff && t.staff.length) ? `${t.staff.join(", ")} 전용` : "모든 직원";
     const kinds = (t.rules || []).map((r) => RULE_NAMES[r] || r).join(" · ") || "직접 고를 때만";
-    li.innerHTML = `<div class="t"><b>${esc(t.name || "(이름 없음)")}${errs ? ' <span class="bad">●</span>' : ""}</b><span>${esc(kinds)} / ${esc(who)}</span></div>
+    const reset = resetPending(t) ? " / 직원 수정본 되돌리기" : "";
+    li.innerHTML = `<div class="t"><b>${esc(t.name || "(이름 없음)")}${errs ? ' <span class="bad">●</span>' : ""}</b><span>${esc(kinds)} / ${esc(who)}${esc(reset)}</span></div>
       <div class="mv"><button class="small" data-up="${i}">▲</button><button class="small" data-down="${i}">▼</button></div>`;
     li.addEventListener("click", (e) => {
       if (e.target.dataset.up !== undefined) { move(i, -1); e.stopPropagation(); return; }
@@ -824,7 +866,14 @@ function drawEditor() {
       <div class="vars" id="f-vars"></div>
     </label>
     <label class="f"><span>문구 키 (폰이 같은 문구를 알아보는 이름${keyLocked(t) ? " · 이미 배포된 문구라 바꿀 수 없습니다" : ". 배포하면 바꿀 수 없습니다"})</span>
-      <input type="text" id="f-key" maxlength="${LIMITS.maxKey}" value="${esc(t.key || "")}"${keyLocked(t) ? " readonly" : ""}></label>`;
+      <input type="text" id="f-key" maxlength="${LIMITS.maxKey}" value="${esc(t.key || "")}"${keyLocked(t) ? " readonly" : ""}></label>` +
+    // 직원 폰에서 고친 이 문구 하나만 회사 문구로 돌린다(배포된 문구만 · 앱 v0.31.0부터). 끔(phoneEdits:false)처럼 모두 지우지 않는다.
+    (keyLocked(t) ? `
+    <div class="f"><span>직원 수정본 (앱 v0.31.0부터)</span>
+      <div class="row"><button type="button" class="small" id="f-reset">${resetPending(t) ? "되돌리기 취소" : "직원 수정본 되돌리기"}</button>
+      <span class="hint">${resetPending(t)
+        ? "배포하면 이 문구를 고친 직원 폰은 다음 확인 때 회사 문구로 돌아갑니다."
+        : "직원 폰에서 고친 이 문구를 한 번 회사 문구로 돌립니다(직원은 그 뒤 다시 고칠 수 있습니다). 다른 문구의 수정본은 그대로입니다."}</span></div></div>` : "");
 
   const rulesBox = $("f-rules");
   const extra = (t.rules || []).filter((r) => !RULES.some(([id]) => id === r)).map((r) => [r, RULE_NAMES[r] || r]);
@@ -886,6 +935,7 @@ function drawEditor() {
 
   $("f-name").oninput = (e) => { t.name = e.target.value; touchLight(); };
   if (!keyLocked(t)) $("f-key").oninput = (e) => { t.key = e.target.value.trim(); touchLight(); };
+  if (keyLocked(t)) $("f-reset").onclick = () => toggleReset(t);
   $("f-body").oninput = (e) => { t.body = e.target.value; touchLight(); };
 }
 
@@ -920,17 +970,44 @@ function drawPreview() {
   $("issues").innerHTML = issues.map((x) => `<li class="${x.level}">${esc(x.text)}</li>`).join("");
 }
 
+// ---- 직원이 폰에서 문구 고치기·만들기(phoneEdits · 앱 v0.31.0) ----
+const phoneEditsChosen = () => state.phoneEdits === true || state.phoneEdits === false;
+const PHONE_EDITS_DEFAULT = APP_FACTS.phoneEditsDefault ? "켬" : "끔";
+const PHONE_EDITS_MISSING = `값 없음 — 폰은 마지막 값을 씁니다(앱 기본: ${PHONE_EDITS_DEFAULT})`;
+const PHONE_EDITS_CHOOSE = "「직원이 폰에서 문구 고치기·만들기」를 켬·끔 중에서 고르세요. " +
+  `불러온 개정에는 이 값이 없어 폰은 마지막 값을 씁니다(앱 기본: ${PHONE_EDITS_DEFAULT}). ` +
+  "옛 현황판 탭이나 스크립트가 값을 빠뜨렸을 수 있으니, 끔으로 배포한 적이 있는지 확인하고 고른 뒤 배포합니다.";
+
+/** 문구 탭 머리의 켬·끔 단추와 설명 한 줄. */
+function drawPhoneEdits() {
+  const on = state.phoneEdits === true, off = state.phoneEdits === false;
+  for (const [id, pressed] of [["pe-on", on], ["pe-off", off]]) {
+    const b = $(id);
+    b.className = "chip" + (pressed ? " on" : "");
+    b.setAttribute("aria-pressed", pressed ? "true" : "false");
+  }
+  const changed = state.phoneEdits !== state.livePhoneEdits && phoneEditsChosen();
+  $("pe-note").textContent =
+    (on ? "켬 — 직원이 받은 문구의 본문을 고치고 그 폰에서만 쓰는 문구를 만들 수 있습니다(앱 v0.31.0부터 · 문구 이름·규칙·사진은 이 화면 그대로 · 고친 글은 제나 검문을 거치지 않습니다)"
+      : off ? "끔 — 모든 폰이 이 목록과 똑같이 맞춰지고 직원은 문구를 고칠 수 없습니다(폰에서 고친 문구는 회사 문구로 돌아가고 폰에서 만든 문구는 지워집니다)"
+      : PHONE_EDITS_MISSING + " · 배포하려면 켬·끔 중 하나를 고르세요") +
+    (changed ? " · 배포하면 바뀝니다" : "");
+}
+
 function drawTemplatesBar() {
   $("revline").textContent = `${state.name || "이름 없는 묶음"} · 개정 ${state.revision}${state.dirty ? " · 고친 내용 있음" : ""}` +
     (state.source ? ` · ${state.source}` : "");
   $("managedline").textContent = MANAGED_LINE +
     (state.managed ? "" : ` · 개정 ${state.revision} 은 아직 중앙 관리 전, 다음 배포(개정 ${state.revision + 1})부터`);
+  drawPhoneEdits();
   const errors = allIssues().filter((x) => x.level === "e").length + (state.revisionBad ? 1 : 0);
-  $("btn-publish").disabled = errors > 0 || !state.templates.length || !state.canPublish;
-  const whole = catalogIssues().concat(state.revisionBad ? [{ level: "e", text: "배포처 개정 번호가 숫자가 아닙니다. 「다시 불러오기」 뒤에도 그러면 배포하지 말고 알려 주세요." }] : []);
+  const choose = !phoneEditsChosen();
+  $("btn-publish").disabled = errors > 0 || choose || !state.templates.length || !state.canPublish;
+  const whole = catalogIssues().concat(state.revisionBad ? [{ level: "e", text: "배포처 개정 번호가 숫자가 아닙니다. 「다시 불러오기」 뒤에도 그러면 배포하지 말고 알려 주세요." }] : [])
+    .concat(choose ? [{ level: "e", text: PHONE_EDITS_CHOOSE }] : []);
   const box = $("catalog-issues");
   if (box) box.innerHTML = whole.map((x) => `<li class="${x.level}">${esc(x.text)}</li>`).join("");
-  $("btn-publish").textContent = !state.canPublish ? "배포 토큰 없음" : errors > 0 ? `고칠 곳 ${errors}군데` : "직원 폰에 배포하기";
+  $("btn-publish").textContent = !state.canPublish ? "배포 토큰 없음" : errors > 0 ? `고칠 곳 ${errors}군데` : choose ? "직원 수정 켬·끔부터 고르기" : "직원 폰에 배포하기";
   $("btn-publish").title = !state.canPublish ? "서버에 배포용 GitHub 토큰(CBM_GITHUB_TOKEN)이 없습니다. 파일로 내려받아 내 맥에서 배포하세요." : "";
   const shared = state.roster.shared.length;
   $("photo-note").textContent = `담당자 명함과 회사 사진이 이 글과 함께 한 통으로 나갑니다(지금 회사 사진 ${shared}장${shared ? ", 명함 뒤에 순서대로" : " — 명함만 나갑니다"}). 회사 소개(대표번호·주소·홈페이지·수상)는 글에도 그대로 씁니다. 감사·부탁·답장 요청 없이 자신 있게 알립니다(10-01 대표).`;
@@ -1063,8 +1140,8 @@ function drawFeatures() {
   const ownerText = (o) => [...o.all.map((t) => `「${safeName(t.name)}」 · 모든 직원`),
     ...o.some.map((t) => `「${safeName(t.name)}」 · ${safeName((t.staff || []).join(", "))} 전용`)].join(" / ");
   const DOES = {
-    incoming: "고객이 건 전화를 받고 끊으면 팝업이 뜨고, 맡은 문구가 맨 위 「추천」에 미리 골라져 있습니다.",
-    outgoing: "직원이 건 전화가 끝나면 팝업이 뜹니다. 고객이 받았는지 앱이 모르므로 맡은 문구를 「추천」에 두고 직원이 고릅니다.",
+    incoming: "고객이 건 전화를 받고 끊으면 팝업이 뜨고, 맡은 문구가 맨 위 「추천」에 미리 골라져 있습니다(직원이 ★ 누른 문구는 그 바로 아래 · 앱 v0.31.0부터).",
+    outgoing: "직원이 건 전화가 끝나면 팝업이 뜹니다. 고객이 받았는지 앱이 모르므로 맡은 문구를 「추천」에 두고 직원이 고릅니다(★ 문구와 부재 문구는 그 바로 아래 · 앱 v0.31.0부터).",
     missed: "울렸지만 받지 못한(거절 포함) 전화입니다. 회사 방침(9/25 제나 검문 C-66)으로 이 뒤에는 팝업을 띄우지 않습니다.",
   };
   $("ft-rules").innerHTML = CALL_KINDS.map(([type, name]) => {
@@ -1085,7 +1162,7 @@ function drawFeatures() {
     if (some) return featRow({ name, does, now: `지금: ${ownerText(o)} — 나머지 폰에는 이 전화 뒤 팝업이 뜨지 않습니다`, where, pill: ["warn", "일부 직원만"] });
     return featRow({ name, does, now: "지금: 맡은 문구가 없어 이 전화 뒤 팝업이 뜨지 않습니다", where, pill: ["bad", "꺼짐"] });
   }).join("");
-  $("ft-rules-note").textContent = `팝업에는 「추천」 아래에 나머지 문구가 목록 순서대로 모두 나옵니다. 규칙이 켜져 있어도 밤(${night})·짧은 번호·그 폰의 설정(자동 발송·테스트 모드 등)에 따라 팝업이 뜨지 않을 수 있습니다.`;
+  $("ft-rules-note").textContent = `팝업에는 「추천」 아래에 나머지 문구가 목록 순서대로 나옵니다. 앱 v0.31.0부터는 직원이 폰 「템플릿」 탭에서 ★ 누른 문구가 「추천」 바로 아래에 먼저 보이고 나머지는 「다른 문구 보기」로 접힙니다(★이 없는 폰은 모두 펼침 · ★은 폰마다 따로이고 이 화면에는 보이지 않습니다). 규칙이 켜져 있어도 밤(${night})·짧은 번호·그 폰의 설정(자동 발송·테스트 모드 등)에 따라 팝업이 뜨지 않을 수 있습니다.`;
 
   // 2) 직원 폰이 받아 가는 것 — 배포처의 templates.json · staff.json · version.json
   const commonCount = live ? live.filter((t) => !(t.staff || []).length).length : 0;
@@ -1105,9 +1182,17 @@ function drawFeatures() {
     featRow({ name: "문구", does: "통화 뒤 팝업에 나오는 문구 묶음입니다. 문구마다 받는 직원을 정할 수 있습니다.",
       now: live ? `지금: 문구 ${live.length}개 — 모든 직원 ${commonCount}개 · 직원 전용 ${live.length - commonCount}개` : "지금: 확인 중…",
       where: `「문구」 탭 → 「직원 폰에 배포하기」 · 폰은 늦어도 ${F.catalogCheckHours}시간 안에 받아 갑니다`, val: live ? `개정 ${rev}` : "확인 중" }),
-    featRow({ name: "중앙 관리", does: "켜져 있으면 앱 v0.29.5 이상 폰은 문구·규칙을 배포된 것과 똑같이 맞추고(직원이 고친 문구·폰에서만 만든 문구는 정리) 직원이 고치지 못하게 잠급니다. 그 아래 판 폰은 이 표시를 모릅니다.",
+    featRow({ name: "중앙 관리", does: "켜져 있으면 앱 v0.29.5 이상 폰은 문구 목록·규칙을 배포된 것과 똑같이 맞추고(문구에 붙인 사진은 정리) 규칙을 고치지 못하게 잠급니다. " +
+        "직원이 문구를 고치거나 만드는 것은 아래 「직원이 폰에서 문구 고치기·만들기」를 따릅니다(앱 v0.31.0부터 · v0.29.5~v0.30.x 폰은 늘 잠김 — 고친 문구·폰에서 만든 문구는 정리). 그 아래 판 폰은 이 표시를 모릅니다.",
       now: !live ? "지금: 확인 중…" : state.managed ? `지금: 켬(개정 ${rev})` : `지금: 개정 ${rev} 은 아직 중앙 관리 전 — 다음 배포(개정 ${rev + 1})부터 켜집니다`,
-      where: "끄는 스위치는 없습니다 — 이 화면은 배포할 때마다 켭니다", pill: !live ? ["busy", "확인 중"] : state.managed ? ["ok", "켬"] : ["warn", "아직"] }),
+      where: "중앙 관리 자체를 끄는 스위치는 없습니다 — 이 화면은 배포할 때마다 켭니다. 직원 수정은 「문구」 탭 머리의 「직원이 폰에서 문구 고치기·만들기」로 정합니다",
+      pill: !live ? ["busy", "확인 중"] : state.managed ? ["ok", "켬"] : ["warn", "아직"] }),
+    featRow({ name: "직원이 폰에서 문구 고치기·만들기", does: "켬이면 앱 v0.31.0 이상 폰에서 직원이 받은 문구의 본문을 고치고(문구 이름·규칙·사진은 이 화면 그대로) 그 폰에서만 쓰는 문구를 만들 수 있습니다. " +
+        "고친 글은 제나 검문을 거치지 않습니다(폰이 고칠 때 금지어·주소·길이를 검사합니다). 대표님이 같은 문구를 바꾸면 직원 수정본은 그대로 두고 그 폰에 「공통 문구 바뀜」을 띄웁니다. " +
+        "끔이면 v0.29.5~v0.30.x 처럼 잠기고, 폰에서 고친 문구는 회사 문구로 돌아가고 폰에서 만든 문구는 지워집니다(되살릴 수 없음).",
+      now: !live ? "지금: 확인 중…" : state.livePhoneEdits === true ? `지금: 켬(개정 ${rev})` : state.livePhoneEdits === false ? `지금: 끔(개정 ${rev})` : `지금: ${PHONE_EDITS_MISSING}`,
+      where: "「문구」 탭 머리의 켬·끔 → 「직원 폰에 배포하기」 · 문구 하나만 회사 문구로 돌리려면 끄지 말고 그 문구의 「직원 수정본 되돌리기」 → 배포",
+      pill: !live ? ["busy", "확인 중"] : state.livePhoneEdits === true ? ["ok", "켬"] : state.livePhoneEdits === false ? ["busy", "끔"] : ["warn", "값 없음"] }),
     featRow({ name: "명함·회사 사진", does: "문자에 담당자 명함(첫 장)과 회사 사진(그 뒤 순서대로)이 함께 나갑니다. 폰은 마이페이지 이름으로 자기 명함을 찾습니다.",
       now: rosterNow, where: `「직원·명함」·「회사 사진」 탭 → 「직원 폰에 반영하기」 · 앱 v0.26 이상 폰이 늦어도 ${F.photoCheckHours}시간 안에 받아 갑니다`,
       val: r ? `명부 개정 ${r.revision}` : "확인 중" }),
@@ -1703,13 +1788,16 @@ async function load() {
     const rev = Number(result.catalog.revision || 0);
     state.revisionBad = !(Number.isInteger(rev) && rev >= 0);
     state.revision = state.revisionBad ? 0 : rev;
-    state.templates = (result.catalog.templates || []).map((t) => ({
-      key: t.key, name: t.name, body: t.body,
-      rules: (t.rules || []).map((r) => String(r).trim().toLowerCase()), staff: t.staff || [],
-    }));
+    state.templates = (result.catalog.templates || []).map((t) => {
+      const o = { key: t.key, name: t.name, body: t.body, rules: (t.rules || []).map((r) => String(r).trim().toLowerCase()), staff: t.staff || [] };
+      // 「직원 수정본 되돌리기」 값은 그대로 이어 싣는다(빠지거나 작아지면 폰이 다음에 올린 값을 이미 본 값으로 여길 수 있다)
+      if (validReset(t.resetEdits)) o.resetEdits = t.resetEdits;
+      return o;
+    });
     // 배포된 규칙·키를 기억한다(규칙을 빼도 폰에서는 안 빠지고, 키를 바꾸면 폰이 다른 문구로 본다)
     state.publishedRules = Object.fromEntries(state.templates.map((t) => [t.key, [...t.rules]]));
     state.publishedKeys = new Set(state.templates.map((t) => t.key));
+    state.publishedReset = Object.fromEntries(state.templates.map((t) => [t.key, t.resetEdits]));
     const n = normalizeRoster(result.roster);
     state.roster = n.roster; state.rosterFormat = n.format;
     state.files = result.files || {}; state.staged = {}; state.unfetched = new Set(result.unfetched || []);
@@ -1719,6 +1807,10 @@ async function load() {
       : result.staff;
     state.version = result.version || null;
     state.managed = result.catalog.managed === true;
+    // true·false 만 값으로 본다. 없거나 다른 값이면 null — 「켬」으로 짐작해 끔을 되살리지 않게 고르기 전에는 배포하지 않는다.
+    const pe = result.catalog.phoneEdits;
+    state.phoneEdits = pe === true || pe === false ? pe : null;
+    state.livePhoneEdits = state.phoneEdits;
     state.liveTemplates = liveCopy(state.templates);
     state.liveRoster = rosterSummary(state.roster);
     state.sel = 0; state.dirty = false; state.rosterDirty = false; state.source = result.source; state.canPublish = result.canPublish;
@@ -1736,15 +1828,20 @@ async function load() {
 }
 
 function payload() {
+  // 직원 수정 켬·끔은 늘 명시값으로 싣는다(값이 빠지면 폰은 마지막 값을 쓴다). 고르지 않았으면 배포·내려받기 전에 막는다.
+  if (!phoneEditsChosen()) throw new Error(PHONE_EDITS_CHOOSE);
   return {
     format: 1,
     revision: state.revision + 1,
     name: state.name || "이룸경영지원센터 공통 문구",
-    // 중앙 관리는 언제나 켠다(MANAGED_LINE 주석). 자리는 name 바로 뒤 — 배포 스크립트용 개정 파일과 바이트까지 같게 둔다.
+    // 중앙 관리는 언제나 켠다(MANAGED_LINE 주석). 자리는 name 바로 뒤, 그 뒤가 phoneEdits —
+    // 키 순서 format,revision,name,managed,phoneEdits,templates 는 배포 스크립트용 개정 파일과 바이트까지 같게 둔다.
     managed: true,
+    phoneEdits: state.phoneEdits,
     templates: state.templates.map((t) => {
       const o = { key: t.key, name: (t.name || "").trim(), body: (t.body || "").trim(), rules: t.rules || [] };
       if ((t.staff || []).length) o.staff = t.staff;
+      if (validReset(t.resetEdits)) o.resetEdits = t.resetEdits;   // 있을 때만(앱 v0.31.0 · 옛 앱은 모르는 키라 무시)
       return o;
     }),
   };
@@ -1753,12 +1850,24 @@ function payload() {
 async function publish() {
   const errors = allIssues().filter((x) => x.level === "e");
   if (errors.length) return;
+  if (!phoneEditsChosen()) { showDialog("배포하지 않았습니다", `<p>${esc(PHONE_EDITS_CHOOSE)}</p>`); return; }
+  // 끔으로 바꾸는 배포(배포처 값이 끔이 아닐 때)는 따로 한 번 더 묻는다 — 직원 수정본·폰 전용 문구는 되살릴 수 없다
+  if (state.phoneEdits === false && state.livePhoneEdits !== false &&
+      !confirm("「직원이 폰에서 문구 고치기·만들기」를 끔으로 배포합니다.\n\n" +
+        "직원이 폰에서 고친 문구와 폰에서 만든 문구가 다음 확인 때 모두 회사 문구로 돌아가거나 지워집니다. 되살릴 수 없습니다(앱 v0.31.0부터의 폰).\n\n" +
+        "문구 하나만 회사 문구로 돌리려면 끄지 말고 그 문구의 「직원 수정본 되돌리기」를 쓰세요.")) return;
   const warns = allIssues().filter((x) => x.level === "w");
   const who = state.templates.map((t) => `· ${t.name} → ${(t.staff || []).length ? t.staff.join(", ") : "모든 직원"}`).join("\n");
+  const resets = state.templates.filter(resetPending).map((t) => t.name);
   const okMsg = `문구 ${state.templates.length}개를 개정 ${state.revision + 1} 로 배포합니다.\n\n${who}\n\n` +
     (warns.length ? `확인할 점 ${warns.length}가지가 있습니다(배포는 됩니다).\n\n` : "") +
     // 중앙 관리가 처음 켜지는 배포(불러온 개정에 managed 가 없을 때)에만 무엇이 정리되는지 알린다
-    (state.managed ? "" : "이번 배포부터 중앙 관리가 켜집니다. 앱 v0.29.5 이상 폰은 이 목록과 똑같이 맞춰지고(직원이 고친 문구·폰에서만 만든 문구·문구에 붙인 사진은 정리) 직원은 문구·규칙을 고칠 수 없습니다.\n\n") +
+    (state.managed ? "" : "이번 배포부터 중앙 관리가 켜집니다. 앱 v0.29.5 이상 폰은 이 목록과 똑같이 맞춰지고(문구에 붙인 사진은 정리) 직원은 규칙을 고칠 수 없습니다. " +
+      "직원이 고친 문구·폰에서만 만든 문구는 v0.29.5~v0.30.x 폰에서는 정리되고, 앱 v0.31.0부터는 「직원이 폰에서 문구 고치기·만들기」를 따릅니다.\n\n") +
+    (state.phoneEdits
+      ? "직원이 폰에서 문구 고치기·만들기: 켬(앱 v0.31.0부터) — 직원이 받은 문구의 본문을 고치고 폰 전용 문구를 만들 수 있습니다. 고친 글은 제나 검문을 거치지 않습니다. v0.29.5~v0.30.x 폰은 계속 잠겨 있습니다.\n\n"
+      : "직원이 폰에서 문구 고치기·만들기: 끔 — 모든 폰이 이 목록과 똑같이 맞춰지고 직원은 문구를 고칠 수 없습니다.\n\n") +
+    (resets.length ? `직원 수정본 되돌리기: ${resets.join(", ")} — 이 문구를 고친 직원 폰은 다음 확인 때 회사 문구로 돌아갑니다(앱 v0.31.0부터).\n\n` : "") +
     (state.templates.some((t) => ((state.publishedRules || {})[t.key] || []).some((r) => !(t.rules || []).includes(r)))
       ? "뺀 자동 규칙은 앱 v0.29.5 아래 폰에서는 지워지지 않습니다(추천이 그대로일 수 있습니다).\n" : "") +
     "고객에게 나가는 글을 새로 쓰거나 바꿨다면 제나 검문을 거쳤는지 확인하세요.\n" +
@@ -1770,6 +1879,8 @@ async function publish() {
     const body = payload();
     const source = await backend.publish(body);
     state.revision = body.revision; state.dirty = false; state.source = source || state.source; state.managed = body.managed === true;
+    state.livePhoneEdits = body.phoneEdits;
+    state.publishedReset = Object.fromEntries(body.templates.map((t) => [t.key, t.resetEdits]));
     state.liveTemplates = liveCopy(body.templates);
     drawFeatures();
     setStatus(`배포했습니다 · 개정 ${body.revision}`, "ok");
@@ -1791,6 +1902,7 @@ function showDialog(title, html) {
 }
 
 function download() {
+  if (!phoneEditsChosen()) { showDialog("내려받지 않았습니다", `<p>${esc(PHONE_EDITS_CHOOSE)}</p>`); return; }
   const blob = new Blob([JSON.stringify(payload(), null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -1810,6 +1922,37 @@ function keyFor(prefix) {
 /** 이미 배포된 문구의 키(폰이 그 키로 문구를 알아본다)는 바꾸지 못하게 한다. */
 function keyLocked(t) { return !!t && !!state.publishedKeys && state.publishedKeys.has(t.key) && !t._new; }
 
+/** 이 문구에 아직 배포하지 않은 「직원 수정본 되돌리기」가 있는가(배포된 resetEdits 보다 크다). */
+function resetPending(t) {
+  return !!t && validReset(t.resetEdits) && t.resetEdits > ((state.publishedReset || {})[t.key] || 0);
+}
+/**
+ * 「직원 수정본 되돌리기」: 배포된 값 + 1 과 이번 개정 번호(state.revision + 1) 중 큰 값(확인 창을 거친다). 배포 전에 한 번 더 누르면
+ * 배포된 값으로 돌려 취소한다. 개정 번호는 늘 이전 개정보다 크므로, 옛 현황판 탭·손으로 만든 개정이 이 키를 빠뜨려 배포된 값이
+ * 0 으로 읽혀도 폰이 이미 본 값보다 큰 값이 나간다(폰은 본 값보다 클 때만 되돌린다 · 검토 C1).
+ */
+function toggleReset(t) {
+  const published = (state.publishedReset || {})[t.key];
+  if (resetPending(t)) {
+    if (published === undefined) delete t.resetEdits; else t.resetEdits = published;
+    touch();
+    return;
+  }
+  const next = Math.max((published || 0) + 1, state.revision + 1);
+  if (next > RESET_MAX) { setStatus("이 문구는 더 되돌릴 수 없습니다(횟수 한도) — 알려 주세요", "bad"); return; }
+  if (!confirm(`「${t.name}」 직원 수정본을 되돌립니다.\n\n이 문구를 고친 직원 폰은 다음 확인 때 회사 문구로 돌아갑니다(앱 v0.31.0부터 · 배포해야 적용됩니다). ` +
+    "다른 문구의 수정본과 직원이 폰에서 만든 문구는 그대로입니다.")) return;
+  t.resetEdits = next;
+  touch();
+}
+
+/** 「직원이 폰에서 문구 고치기·만들기」 켬(true)·끔(false). 배포해야 폰에 간다. */
+function setPhoneEdits(on) {
+  if (state.phoneEdits === on) return;
+  state.phoneEdits = on;
+  touch();
+}
+
 $("btn-add").onclick = () => {
   state.templates.push({
     key: keyFor("t"), name: "새 문구", rules: [], staff: [], _new: true,
@@ -1825,6 +1968,7 @@ $("btn-dup").onclick = () => {
   copy.name = t.name + " 사본";
   copy.key = keyFor(t.key);
   copy.rules = [];      // 자동 규칙은 한 문구만 맡는다
+  delete copy.resetEdits;   // 새 문구라 되돌릴 직원 수정본이 없다
   copy._new = true;
   state.templates.splice(state.sel + 1, 0, copy);
   state.sel += 1;
@@ -1832,7 +1976,9 @@ $("btn-dup").onclick = () => {
 };
 $("btn-del").onclick = () => {
   const t = state.templates[state.sel];
-  if (!t || !confirm(`"${t.name}" 문구를 지웁니다. 배포하면 직원 폰에서도 사라집니다(앱 v0.29.5 아래 폰에서는 직원이 고친 것만 그 폰에 남습니다).`)) return;
+  // 묶음 전체에서 빠진 키는 앱 v0.31.0 폰에서도 직원이 고쳤든 아니든 지운다(대표가 문구를 거둬들일 수 있게 · ADR-013).
+  // 받는 직원만 바꾼 것은 지우기가 아니다 — 그때 직원 수정본은 그 폰에 「이 폰에서만」으로 남는다(앱 v0.31.0 · 직원 수정 켬일 때).
+  if (!t || !confirm(`"${t.name}" 문구를 지웁니다. 배포하면 직원 폰에서도 사라집니다(직원이 고친 것도 함께 · 앱 v0.29.5 아래 폰에서는 직원이 고친 것만 그 폰에 남습니다).`)) return;
   state.templates.splice(state.sel, 1);
   state.sel = Math.max(0, state.sel - 1);
   touch();
@@ -1843,6 +1989,8 @@ $("btn-reload").onclick = () => {
 };
 $("btn-download").onclick = download;
 $("btn-publish").onclick = publish;
+$("pe-on").onclick = () => setPhoneEdits(true);
+$("pe-off").onclick = () => setPhoneEdits(false);
 $("dlg-close").onclick = () => $("dlg").close();
 $("prev-staff").onchange = drawPreview;
 $("prev-time").onchange = drawPreview;
